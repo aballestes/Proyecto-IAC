@@ -1,0 +1,55 @@
+###############################################################################
+# INVENTARIO DINÁMICO vSphere — Producción  
+###############################################################################
+
+plugin: community.vmware.vmware_vm_inventory
+
+hostname: "vcenter-prod.dominio.local"
+username: "{{ lookup('env', 'VMWARE_USER_PROD') | default('svc-ansible@vsphere.local') }}"
+password: "{{ lookup('env', 'VMWARE_PASSWORD_PROD') }}"
+validate_certs: false
+
+datacenter: "DC-Produccion"
+
+properties:
+  - name
+  - config.guestFullName
+  - config.hardware.numCPU
+  - config.hardware.memoryMB
+  - guest.ipAddress
+  - guest.toolsStatus
+  - runtime.powerState
+  - summary.config.annotation
+  - config.template
+  - resourcePool
+
+filters:
+  - runtime.powerState == "poweredOn"
+  - config.template == false
+
+hostnames:
+  - config.name
+
+keyed_groups:
+  - key: config.guestFullName | lower
+    prefix: "os"
+    separator: "_"
+  - key: "cluster"
+    prefix: "cluster"
+
+groups:
+  linux_vms:    "config.guestFullName is defined and ('Linux' in config.guestFullName or 'Red Hat' in config.guestFullName or 'Ubuntu' in config.guestFullName)"
+  windows_vms:  "config.guestFullName is defined and 'Windows' in config.guestFullName"
+  db_vms:       "name is defined and ('db' in name.lower() or 'sql' in name.lower() or 'oracle' in name.lower() or 'mysql' in name.lower() or 'postgres' in name.lower())"
+  app_vms:      "name is defined and 'app' in name.lower()"
+  criticos:     "name is defined and 'crit' in name.lower()"
+  devtest_vms:  "name is defined and ('dev' in name.lower() or 'test' in name.lower() or 'qa' in name.lower())"
+
+compose:
+  ansible_host: "guest.ipAddress"
+  ansible_user: "'Administrator' if 'Windows' in config.guestFullName else 'ansible-user'"
+  ansible_connection: "'winrm' if 'Windows' in config.guestFullName else 'ssh'"
+  vcpu_count:   "config.hardware.numCPU"
+  memory_mb:    "config.hardware.memoryMB"
+  power_state:  "runtime.powerState"
+  tools_status: "guest.toolsStatus"

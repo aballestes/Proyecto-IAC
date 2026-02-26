@@ -1,0 +1,152 @@
+---
+###############################################################################
+# PLAYBOOK: vm-health-check.yml
+# Descripción: Verifica el estado de salud de todas las VMs del inventario
+#              Genera reporte de uso de recursos y detecta VMs problemáticas
+#
+# Uso:
+#   # Contingencia:
+#   ansible-playbook playbooks/vm-health-check.yml \
+#     -i inventory/contingencia/
+#
+#   # Producción:
+#   ansible-playbook playbooks/vm-health-check.yml \
+#     -i inventory/produccion/
+#
+#   # Solo VMs críticas:
+#   ansible-playbook playbooks/vm-health-check.yml \
+#     -i inventory/produccion/ -l criticos
+###############################################################################
+
+- name: "IaC | Health Check de VMs vSphere via vCenter API"
+  hosts: localhost
+  gather_facts: true
+  connection: local
+
+  vars:
+    report_file: "/tmp/vm-health-report-{{ ansible_date_time.date }}.txt"
+    vms_with_issues: []
+
+  tasks:
+    - name: "HEALTH | Obtener lista completa de VMs del datacenter"
+      community.vmware.vmware_vm_info:
+        hostname:       "{{ vcenter_hostname }}"
+        username:       "{{ vcenter_username }}"
+        password:       "{{ vcenter_password }}"
+        validate_certs: "{{ vcenter_validate_certs }}"
+      register: all_vms
+      delegate_to: localhost
+
+    - name: "HEALTH | Total de VMs detectadas"
+      ansible.builtin.debug:
+        msg: "Total VMs en inventario: {{ all_vms.virtual_machines | length }}"
+
+    - name: "HEALTH | Identificar VMs con VMware Tools desactualizadas o ausentes"
+      ansible.builtin.set_fact:
+        vms_tools_issues: >-
+          {{ all_vms.virtual_machines | selectattr('guest_tools_status', 'ne', 'guestToolsRunning')
+          | map(attribute='guest_name') | list }}
+
+    - name: "HEALTH | Identificar VMs apagadas"
+      ansible.builtin.set_fact:
+        vms_powered_off: >-
+          {{ all_vms.virtual_machines | selectattr('power_state', 'eq', 'poweredOff')
+          | map(attribute='guest_name') | list }}
+
+    - name: "HEALTH | Mostrar VMs con problemas de VMware Tools"
+      ansible.builtin.debug:
+        msg: "VMs con Tools issues ({{ vms_tools_issues | length }}): {{ vms_tools_issues }}"
+      when: vms_tools_issues | length > 0
+
+    - name: "HEALTH | Mostrar VMs apagadas"
+      ansible.builtin.debug:
+        msg: "VMs Apagadas ({{ vms_powered_off | length }}): {{ vms_powered_off }}"
+      when: vms_powered_off | length > 0
+
+    - name: "HEALTH | Generar reporte de salud"
+      ansible.builtin.template:
+        src: "vm-health-report.j2"
+        dest: "{{ report_file }}"
+        mode: '0644'
+      delegate_to: localhost
+      ignore_errors: true
+
+    - name: "HEALTH | Path del reporte generado"
+      ansible.builtin.debug:
+        msg: "Reporte guardado en: {{ report_file }}"
+
+# ---- Health Check de conectividad SSH/WinRM hacia VMs Linux ----
+- name: "IaC | Verificar conectividad hacia VMs Linux"
+  hosts: linux_vms
+  gather_facts: false
+  ignore_unreachable: true
+
+  tasks:
+    - name: "CONN | Verificar conectividad SSH"
+      ansible.builtin.ping:
+      register: ping_result
+      ignore_errors: true
+
+    - name: "CONN | Verificar uso de disco (Linux)"
+      ansible.builtin.shell: df -h / | tail -1 | awk '{print $5}' | tr -d '%'
+      register: disk_usage
+      changed_when: false
+      ignore_errors: true
+      when: ping_result is success
+
+    - name: "CONN | Alerta si disco > 90%"
+      ansible.builtin.debug:
+        msg: "⚠️ ALERTA: Disco root al {{ disk_usage.stdout }}% en {{ inventory_hostname }}"
+      when:
+        - ping_result is success
+        - disk_usage.stdout is defined
+        - disk_usage.stdout | int > 90
+
+    - name: "CONN | Verificar memoria disponible (Linux)"
+      ansible.builtin.shell: free -m | awk '/^Mem:/{printf "%.0f", ($3/$2)*100}'
+      register: mem_usage
+      changed_when: false
+      ignore_errors: true
+      when: ping_result is success
+
+    - name: "CONN | Alerta si RAM > 85%"
+      ansible.builtin.debug:
+        msg: "⚠️ ALERTA: RAM al {{ mem_usage.stdout }}% en {{ inventory_hostname }}"
+      when:
+        - ping_result is success
+        - mem_usage.stdout is defined
+        - mem_usage.stdout | int > 85
+
+    - name: "CONN | VMs no accesibles"
+      ansible.builtin.debug:
+        msg: "❌ HOST NO ACCESIBLE: {{ inventory_hostname }} ({{ ansible_host }})"
+      when: ping_result is failed or ping_result is unreachable
+
+# ---- Health Check de conectividad WinRM hacia VMs Windows ----
+- name: "IaC | Verificar conectividad hacia VMs Windows"
+  hosts: windows_vms
+  gather_facts: false
+  ignore_unreachable: true
+
+  tasks:
+    - name: "WIN | Verificar conectividad WinRM"
+      ansible.windows.win_ping:
+      register: win_ping
+      ignore_errors: true
+
+    - name: "WIN | Verificar uso de disco C: (Windows)"
+      ansible.windows.win_shell: |
+        $disk = Get-PSDrive C
+        [math]::Round(($disk.Used / ($disk.Used + $disk.Free)) * 100)
+      register: win_disk
+      changed_when: false
+      ignore_errors: true
+      when: win_ping is success
+
+    - name: "WIN | Alerta si disco C: > 90%"
+      ansible.builtin.debug:
+        msg: "⚠️ ALERTA: Disco C: al {{ win_disk.stdout | trim }}% en {{ inventory_hostname }}"
+      when:
+        - win_ping is success
+        - win_disk.stdout is defined
+        - win_disk.stdout | trim | int > 90

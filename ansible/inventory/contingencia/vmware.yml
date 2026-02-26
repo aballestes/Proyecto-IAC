@@ -1,0 +1,80 @@
+###############################################################################
+# INVENTARIO DINÁMICO vSphere — Contingencia
+# Plugin: community.vmware.vmware_vm_inventory
+# Documentación: https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_vm_inventory_inventory.html
+#
+# Uso:
+#   ansible-inventory -i inventory/contingencia/ --list
+#   ansible-inventory -i inventory/contingencia/ --graph
+###############################################################################
+
+plugin: community.vmware.vmware_vm_inventory
+
+# Conexión a vCenter de Contingencia
+hostname: "vcenter-cont.dominio.local"
+# Credenciales via variables de entorno:
+#   export VMWARE_HOST=vcenter-cont.dominio.local
+#   export VMWARE_USER=svc-ansible@vsphere.local
+#   export VMWARE_PASSWORD=PASSWORD
+username: "{{ lookup('env', 'VMWARE_USER') | default('svc-ansible@vsphere.local') }}"
+password: "{{ lookup('env', 'VMWARE_PASSWORD') }}"
+validate_certs: false
+
+# Scope del inventario
+datacenter:   "DC-Contingencia"
+
+# Incluir solo VMs encendidas y con VMware Tools instalado
+#with_nested_properties: true
+properties:
+  - name
+  - config.guestFullName
+  - config.hardware.numCPU
+  - config.hardware.memoryMB
+  - guest.ipAddress
+  - guest.toolsStatus
+  - runtime.powerState
+  - summary.config.annotation
+  - config.template
+
+# Filtros: solo VMs prendidas (no templates)
+filters:
+  - runtime.powerState == "poweredOn"
+  - config.template == false
+
+# Agrupamiento dinámico por propiedades de la VM
+hostnames:
+  - config.name
+
+keyed_groups:
+  # Grupo por SO
+  - key: config.guestFullName | lower
+    prefix: "os"
+    separator: "_"
+  # Grupo por datacenter/folder
+  - key: "datacenter"
+    prefix: "dc"
+  # Grupo por cluster
+  - key: "cluster"
+    prefix: "cluster"
+
+# Grupos personalizados basados en nombre de la VM
+groups:
+  linux_vms:    "config.guestFullName is defined and ('Linux' in config.guestFullName or 'Red Hat' in config.guestFullName or 'Ubuntu' in config.guestFullName or 'CentOS' in config.guestFullName)"
+  windows_vms:  "config.guestFullName is defined and 'Windows' in config.guestFullName"
+  db_vms:       "name is defined and ('db' in name.lower() or 'sql' in name.lower() or 'oracle' in name.lower() or 'mysql' in name.lower() or 'postgres' in name.lower())"
+  app_vms:      "name is defined and 'app' in name.lower()"
+  devtest_vms:  "name is defined and ('dev' in name.lower() or 'test' in name.lower() or 'qa' in name.lower())"
+
+# Variables adicionales por host
+compose:
+  # IP de conexión para Ansible
+  ansible_host: "guest.ipAddress"
+  # Usuario SSH según SO
+  ansible_user: "'Administrator' if 'Windows' in config.guestFullName else 'ansible-user'"
+  # Conexión según SO
+  ansible_connection: "'winrm' if 'Windows' in config.guestFullName else 'ssh'"
+  # Variables de recursos actuales
+  vcpu_count:   "config.hardware.numCPU"
+  memory_mb:    "config.hardware.memoryMB"
+  power_state:  "runtime.powerState"
+  tools_status: "guest.toolsStatus"

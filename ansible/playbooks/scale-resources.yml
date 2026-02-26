@@ -1,0 +1,103 @@
+---
+###############################################################################
+# PLAYBOOK: scale-resources.yml
+# Descripción: Escala CPU, Memoria y/o Disco de una o múltiples VMs VMware
+#
+# MODO INTERACTIVO (una sola VM):
+#   ansible-playbook playbooks/scale-resources.yml \
+#     -e "scale_vm_name=vm-app-prod-01" \
+#     -e "scale_datacenter=DC-Produccion" \
+#     -e "scale_cpu=8" \
+#     -e "scale_memory_mb=16384"
+#
+# MODO ARCHIVO DE CONFIGURACIÓN (múltiples VMs):
+#   ansible-playbook playbooks/scale-resources.yml \
+#     -e "@vars/scale-batch.yml"
+#
+# AGREGAR DISCO:
+#   ansible-playbook playbooks/scale-resources.yml \
+#     -e "scale_vm_name=vm-db-prod-01" \
+#     -e "scale_datacenter=DC-Produccion" \
+#     -e '{"scale_add_disk": {"size_gb": 500, "thin": false}}'
+#
+# DRY RUN (sin cambios):
+#   ansible-playbook playbooks/scale-resources.yml --check \
+#     -e "scale_vm_name=vm-app-prod-01" ...
+###############################################################################
+
+- name: "IaC | Escalado de Recursos VM vSphere"
+  hosts: localhost
+  gather_facts: true
+  connection: local
+
+  pre_tasks:
+    - name: "PRE | Validar modo de ejecución"
+      ansible.builtin.debug:
+        msg:
+          - "======================================"
+          - "  ESCALADO DE RECURSOS VM — vSphere   "
+          - "======================================"
+          - "Modo: {{ 'DRY-RUN (--check)' if ansible_check_mode else 'APLICAR CAMBIOS' }}"
+          - "Entorno: {{ scale_datacenter | default('NO ESPECIFICADO') }}"
+          - "VM: {{ scale_vm_name | default('NO ESPECIFICADA') }}"
+          - "CPU nuevo: {{ scale_cpu | default('Sin cambio') }}"
+          - "RAM nueva: {{ scale_memory_mb | default('Sin cambio') }}{{ 'MB' if scale_memory_mb is defined else '' }}"
+          - "======================================"
+
+    - name: "PRE | Confirmar en modo interactivo (producción)"
+      ansible.builtin.pause:
+        prompt: |
+          ⚠️  CONFIRMACIÓN REQUERIDA
+          VM: {{ scale_vm_name | default('BATCH') }}
+          Datacenter: {{ scale_datacenter | default('desconocido') }}
+          CPU: {{ scale_cpu | default('sin cambio') }}
+          RAM: {{ scale_memory_mb | default('sin cambio') }}MB
+          Disco: {{ scale_add_disk.size_gb | default('sin disco nuevo') }}GB
+
+          Escribir 'SI' para confirmar, cualquier otra cosa cancela
+      register: confirm_input
+      when:
+        - not ansible_check_mode
+        - require_confirmation | default(true) | bool
+
+    - name: "PRE | Cancelar si no se confirmó"
+      ansible.builtin.fail:
+        msg: "Operación CANCELADA por el operador."
+      when:
+        - confirm_input is defined
+        - confirm_input.user_input | default('') | upper != 'SI'
+
+  tasks:
+    # ---- Escalado de una sola VM ----
+    - name: "Escalar VM individual"
+      ansible.builtin.include_role:
+        name: vm-scale-resources
+      when:
+        - scale_vm_name is defined
+        - batch_vms is not defined
+
+    # ---- Escalado en lote desde archivo de variables ----
+    - name: "Escalar múltiples VMs en lote"
+      ansible.builtin.include_role:
+        name: vm-scale-resources
+      vars:
+        scale_vm_name:   "{{ item.vm_name }}"
+        scale_datacenter: "{{ item.datacenter }}"
+        scale_cpu:       "{{ item.cpu | default(omit) }}"
+        scale_memory_mb: "{{ item.memory_mb | default(omit) }}"
+        scale_add_disk:  "{{ item.add_disk | default(omit) }}"
+      loop: "{{ batch_vms }}"
+      loop_control:
+        label: "{{ item.vm_name }}"
+        pause: 5  # segundos entre VMs para no sobrecargar vCenter
+      when:
+        - batch_vms is defined
+        - batch_vms | length > 0
+
+  post_tasks:
+    - name: "POST | Resumen de ejecución"
+      ansible.builtin.debug:
+        msg:
+          - "Playbook completado: {{ ansible_date_time.iso8601 }}"
+          - "VMs procesadas: {{ batch_vms | default([scale_vm_name]) | length }}"
+          - "Revisar log: /var/log/ansible/iaac-scaling.log"

@@ -1,0 +1,42 @@
+---
+# vars/scale-batch-ejemplo.yml
+# Ejemplo: Escalar múltiples VMs en un solo lote
+# Uso: ansible-playbook playbooks/scale-resources.yml -e "@vars/scale-batch-ejemplo.yml"
+
+# IMPORTANTE: vcenter_hostname debe estar definido (via env o group_vars)
+# export VMWARE_HOST=vcenter-cont.dominio.local
+# export VMWARE_USER=svc-ansible@vsphere.local
+# export VMWARE_PASSWORD=PASSWORD_AQUI
+
+require_confirmation: false   # false para automación, true para interactivo
+
+batch_vms:
+  # Escalar CPU y RAM en caliente
+  - vm_name:    "vm-app-cont-01"
+    datacenter: "DC-Contingencia"
+    cpu:        8
+    memory_mb:  16384
+
+  # Solo escalar RAM
+  - vm_name:    "vm-app-cont-02"
+    datacenter: "DC-Contingencia"
+    memory_mb:  8192
+
+  # Solo agregar disco (500GB thin)
+  - vm_name:    "vm-db-cont-01"
+    datacenter: "DC-Contingencia"
+    add_disk:
+      size_gb:        500
+      thin:           false
+      datastore:      "FS7300-CONT-DS02"
+      scsi_controller: 0
+      unit_number:    2
+
+  # CPU + RAM + disco nuevo
+  - vm_name:    "vm-app-cont-03"
+    datacenter: "DC-Contingencia"
+    cpu:        4
+    memory_mb:  8192
+    add_disk:
+      size_gb: 100
+      thin:    true

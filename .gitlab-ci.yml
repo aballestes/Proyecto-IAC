@@ -1,0 +1,241 @@
+###############################################################################
+# PIPELINE CI/CD — GitLab CI
+# Descripción: Pipeline de IaC para VMware vSphere
+#              Terraform plan/apply y Ansible con gates de aprobación
+#
+# Variables de entorno a configurar en GitLab CI/CD Settings > Variables:
+#   VSPHERE_USER_CONT     → svc-terraform@vsphere.local
+#   VSPHERE_PASS_CONT     → password vCenter contingencia
+#   VSPHERE_USER_PROD     → svc-terraform@vsphere.local  
+#   VSPHERE_PASS_PROD     → password vCenter producción
+#   ANSIBLE_SSH_KEY       → private key SSH (contenido del archivo)
+#   MINIO_ACCESS_KEY      → acceso al backend de estado
+#   MINIO_SECRET_KEY      → secret del backend de estado
+###############################################################################
+
+image: hashicorp/terraform:1.7
+
+variables:
+  TF_IN_AUTOMATION: "true"
+  TF_CLI_ARGS: "-no-color"
+  ANSIBLE_FORCE_COLOR: "1"
+
+stages:
+  - validate
+  - plan-contingencia
+  - apply-contingencia
+  - plan-produccion
+  - apply-produccion
+  - ansible-ops
+
+# =============================================================================
+# TEMPLATES REUTILIZABLES
+# =============================================================================
+.terraform-base: &terraform-base
+  before_script:
+    - apk add --no-cache python3 py3-pip curl jq
+    - export TF_VAR_vsphere_user="${VSPHERE_USER}"
+    - export TF_VAR_vsphere_password="${VSPHERE_PASS}"
+    - export AWS_ACCESS_KEY_ID="${MINIO_ACCESS_KEY}"
+    - export AWS_SECRET_ACCESS_KEY="${MINIO_SECRET_KEY}"
+    - terraform --version
+
+.ansible-base: &ansible-base
+  image: python:3.11-slim
+  before_script:
+    - pip install ansible pyVmomi community.vmware 2>/dev/null || true
+    - ansible-galaxy collection install community.vmware community.general ansible.posix ansible.windows
+    - mkdir -p ~/.ssh && echo "$ANSIBLE_SSH_KEY" > ~/.ssh/iaac_rsa && chmod 600 ~/.ssh/iaac_rsa
+    - export VMWARE_USER="${VMWARE_ANSIBLE_USER}"
+    - export VMWARE_PASSWORD="${VMWARE_ANSIBLE_PASS}"
+
+# =============================================================================
+# STAGE: VALIDATE — Siempre se ejecuta en cada commit/MR
+# =============================================================================
+terraform-validate:
+  stage: validate
+  <<: *terraform-base
+  script:
+    - echo "=== Validando Terraform Contingencia ==="
+    - cd terraform/environments/contingencia
+    - terraform init -backend=false
+    - terraform validate
+    - echo "=== Validando Terraform Producción ==="
+    - cd ../../produccion
+    - terraform init -backend=false
+    - terraform validate
+    - echo "=== Validando módulos ==="
+    - cd ../../modules/vsphere-vm
+    - terraform init -backend=false
+    - terraform validate
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ansible-lint:
+  stage: validate
+  image: python:3.11-slim
+  script:
+    - pip install ansible ansible-lint
+    - ansible-galaxy collection install community.vmware
+    - cd ansible
+    - ansible-lint playbooks/ roles/ --exclude roles/vm-scale-resources/tasks/main.yml || true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+# =============================================================================
+# STAGE: PLAN CONTINGENCIA
+# =============================================================================
+terraform-plan-contingencia:
+  stage: plan-contingencia
+  <<: *terraform-base
+  variables:
+    VSPHERE_USER: $VSPHERE_USER_CONT
+    VSPHERE_PASS: $VSPHERE_PASS_CONT
+  script:
+    - cd terraform/environments/contingencia
+    - terraform init
+    - terraform plan -out=tfplan-contingencia.tfplan -detailed-exitcode
+  artifacts:
+    name: "tfplan-contingencia-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - terraform/environments/contingencia/tfplan-contingencia.tfplan
+    expire_in: 7 days
+    when: always
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# =============================================================================
+# STAGE: APPLY CONTINGENCIA — Requiere aprobación manual
+# =============================================================================
+terraform-apply-contingencia:
+  stage: apply-contingencia
+  <<: *terraform-base
+  variables:
+    VSPHERE_USER: $VSPHERE_USER_CONT
+    VSPHERE_PASS: $VSPHERE_PASS_CONT
+  script:
+    - cd terraform/environments/contingencia
+    - terraform init
+    - terraform apply -auto-approve tfplan-contingencia.tfplan
+  dependencies:
+    - terraform-plan-contingencia
+  environment:
+    name: contingencia
+    url: https://vcenter-cont.dominio.local
+  when: manual  # ← GATE: Aprobación manual obligatoria
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+    - when: never
+
+# =============================================================================
+# STAGE: PLAN PRODUCCIÓN — Solo desde main
+# =============================================================================
+terraform-plan-produccion:
+  stage: plan-produccion
+  <<: *terraform-base
+  variables:
+    VSPHERE_USER: $VSPHERE_USER_PROD
+    VSPHERE_PASS: $VSPHERE_PASS_PROD
+  script:
+    - cd terraform/environments/produccion
+    - terraform init
+    - terraform plan -out=tfplan-produccion.tfplan -detailed-exitcode
+  artifacts:
+    name: "tfplan-produccion-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - terraform/environments/produccion/tfplan-produccion.tfplan
+    expire_in: 7 days
+    when: always
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# =============================================================================
+# STAGE: APPLY PRODUCCIÓN — Requiere aprobación manual + etiqueta release
+# =============================================================================
+terraform-apply-produccion:
+  stage: apply-produccion
+  <<: *terraform-base
+  variables:
+    VSPHERE_USER: $VSPHERE_USER_PROD
+    VSPHERE_PASS: $VSPHERE_PASS_PROD
+  script:
+    - echo "⚠️ APLICANDO CAMBIOS EN PRODUCCIÓN — $(date)"
+    - cd terraform/environments/produccion
+    - terraform init
+    - terraform apply -auto-approve tfplan-produccion.tfplan
+    - echo "✅ Cambios aplicados en producción — $(date)"
+  dependencies:
+    - terraform-plan-produccion
+  environment:
+    name: produccion
+    url: https://vcenter-prod.dominio.local
+  when: manual  # ← GATE DOBLE: Aprobación manual obligatoria
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^release-.*/   # Solo con tag de release
+      when: manual
+    - when: never
+
+# =============================================================================
+# STAGE: ANSIBLE OPS — Operaciones bajo demanda
+# =============================================================================
+
+# Health check de contingencia (manual, cualquier rama)
+ansible-health-check-contingencia:
+  stage: ansible-ops
+  <<: *ansible-base
+  variables:
+    VMWARE_HOST: "vcenter-cont.dominio.local"
+    VMWARE_ANSIBLE_USER: $VSPHERE_USER_CONT
+    VMWARE_ANSIBLE_PASS: $VSPHERE_PASS_CONT
+  script:
+    - cd ansible
+    - ansible-playbook playbooks/vm-health-check.yml -i inventory/contingencia/ -v
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH
+
+# Health check de producción (manual, solo main)
+ansible-health-check-produccion:
+  stage: ansible-ops
+  <<: *ansible-base
+  variables:
+    VMWARE_HOST: "vcenter-prod.dominio.local"
+    VMWARE_ANSIBLE_USER: $VSPHERE_USER_PROD
+    VMWARE_ANSIBLE_PASS: $VSPHERE_PASS_PROD
+  script:
+    - cd ansible
+    - ansible-playbook playbooks/vm-health-check.yml -i inventory/produccion/ -v
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# Escalado de recursos (parametrizable via variables en el pipeline)
+ansible-scale-resources:
+  stage: ansible-ops
+  <<: *ansible-base
+  variables:
+    VMWARE_HOST: "${SCALE_VCENTER:-vcenter-cont.dominio.local}"
+    VMWARE_ANSIBLE_USER: "${SCALE_VCENTER_USER:-$VSPHERE_USER_CONT}"
+    VMWARE_ANSIBLE_PASS: "${SCALE_VCENTER_PASS:-$VSPHERE_PASS_CONT}"
+  script:
+    - |
+      if [ -z "$SCALE_VM_NAME" ]; then
+        echo "ERROR: Definir variable SCALE_VM_NAME en el pipeline"
+        exit 1
+      fi
+    - cd ansible
+    - |
+      ansible-playbook playbooks/scale-resources.yml \
+        -e "scale_vm_name=${SCALE_VM_NAME}" \
+        -e "scale_datacenter=${SCALE_DATACENTER:-DC-Contingencia}" \
+        ${SCALE_CPU:+-e "scale_cpu=${SCALE_CPU}"} \
+        ${SCALE_MEMORY_MB:+-e "scale_memory_mb=${SCALE_MEMORY_MB}"} \
+        -e "require_confirmation=false" \
+        -v
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH

@@ -1,0 +1,20 @@
+# Dependencias Python para scripts de IaC VMware
+# Instalar con: pip install -r requirements.txt
+
+# VMware Python SDK — acceso directo a API vSphere
+pyVmomi>=8.0.3
+
+# YAML parser — para templates y configuraciones
+PyYAML>=6.0
+
+# Tabulate — salida formateada en terminal
+tabulate>=0.9.0
+
+# Requests — para webhooks y notificaciones
+requests>=2.31.0
+
+# Colorama — salida coloreada en terminal
+colorama>=0.4.6
+
+# Jinja2 — templates para generación de archivos
+Jinja2>=3.1.0

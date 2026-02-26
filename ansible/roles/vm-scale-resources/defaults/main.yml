@@ -1,0 +1,9 @@
+---
+# defaults — Role vm-scale-resources
+
+scale_snapshot_before:    true
+snapshot_name_prefix:     "pre-scale"
+scale_ignore_tools_check: false
+scale_cores_per_socket:   1
+notify_enabled:           false
+vcenter_validate_certs:   false

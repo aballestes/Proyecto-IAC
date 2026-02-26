@@ -1,0 +1,129 @@
+---
+###############################################################################
+# PLAYBOOK: vm-configure.yml
+# Descripción: Configuración baseline de VMs (post-despliegue o existentes)
+#              - Configurar usuario ansible-user
+#              - Instalar VMware Tools
+#              - Configurar NTP
+#              - Configurar sudoers
+#              - Actualizar SO (opcional)
+#
+# Uso:
+#   ansible-playbook playbooks/vm-configure.yml \
+#     -i inventory/contingencia/ -l linux_vms
+###############################################################################
+
+- name: "IaC | Configuración Baseline — VMs Linux"
+  hosts: linux_vms
+  become: true
+  gather_facts: true
+  ignore_unreachable: true
+
+  vars:
+    ntp_servers:
+      - "ntp1.dominio.local"
+      - "ntp2.dominio.local"
+    ansible_user_name: "ansible-user"
+    ansible_user_pubkey: "{{ lookup('file', '~/.ssh/iaac_rsa.pub') }}"
+
+  tasks:
+    - name: "BASE | Crear usuario de servicio ansible-user"
+      ansible.builtin.user:
+        name:       "{{ ansible_user_name }}"
+        comment:    "Ansible Service Account - IaC VMware"
+        shell:      /bin/bash
+        create_home: true
+        state:      present
+
+    - name: "BASE | Agregar clave SSH autorizada"
+      ansible.posix.authorized_key:
+        user:  "{{ ansible_user_name }}"
+        key:   "{{ ansible_user_pubkey }}"
+        state: present
+
+    - name: "BASE | Configurar sudoers sin contraseña para ansible-user"
+      ansible.builtin.copy:
+        dest:    "/etc/sudoers.d/ansible-user"
+        content: "{{ ansible_user_name }} ALL=(ALL) NOPASSWD: ALL\n"
+        mode:    '0440'
+        validate: "visudo -cf %s"
+
+    - name: "BASE | Instalar open-vm-tools (VMware Tools open source)"
+      ansible.builtin.package:
+        name:  open-vm-tools
+        state: present
+
+    - name: "BASE | Habilitar y arrancar open-vm-tools"
+      ansible.builtin.service:
+        name:    open-vm-tools
+        state:   started
+        enabled: true
+
+    - name: "BASE | Configurar NTP con chrony"
+      ansible.builtin.template:
+        src:   chrony.conf.j2
+        dest:  /etc/chrony.conf
+        mode:  '0644'
+      notify: restart chrony
+      ignore_errors: true
+
+    - name: "BASE | Verificar estado de firewalld"
+      ansible.builtin.service_facts:
+
+    - name: "BASE | Permitir SSH en firewalld si está activo"
+      ansible.posix.firewalld:
+        service:   ssh
+        permanent: true
+        state:     enabled
+        immediate: true
+      when: "'firewalld.service' in services and services['firewalld.service'].state == 'running'"
+      ignore_errors: true
+
+    - name: "BASE | Mostrar información del sistema"
+      ansible.builtin.debug:
+        msg:
+          - "Hostname: {{ ansible_hostname }}"
+          - "SO: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "Kernel: {{ ansible_kernel }}"
+          - "CPUs: {{ ansible_processor_vcpus }}"
+          - "RAM: {{ ansible_memtotal_mb }}MB"
+          - "IP: {{ ansible_default_ipv4.address | default('N/A') }}"
+
+  handlers:
+    - name: restart chrony
+      ansible.builtin.service:
+        name:  chronyd
+        state: restarted
+
+# ---- Configuración baseline Windows ----
+- name: "IaC | Configuración Baseline — VMs Windows"
+  hosts: windows_vms
+  gather_facts: true
+  ignore_unreachable: true
+
+  vars:
+    ntp_servers: "ntp1.dominio.local"
+
+  tasks:
+    - name: "WIN-BASE | Configurar NTP Windows"
+      ansible.windows.win_command: >
+        w32tm /config /manualpeerlist:"{{ ntp_servers }}" /syncfromflags:manual /reliable:YES /update
+      changed_when: true
+
+    - name: "WIN-BASE | Habilitar WinRM HTTPS (si no está)"
+      ansible.windows.win_shell: |
+        $cert = New-SelfSignedCertificate -DnsName $env:COMPUTERNAME -CertStoreLocation Cert:\LocalMachine\My
+        New-WSManInstance WinRM/Config/Listener -SelectorSet @{Address="*";Transport="HTTPS"} `
+          -ValueSet @{CertificateThumbprint=$cert.Thumbprint} -ErrorAction SilentlyContinue
+      ignore_errors: true
+
+    - name: "WIN-BASE | Actualizar VMware Tools si hay nueva versión"
+      community.vmware.vmware_guest_tools_upgrade:
+        hostname:       "{{ vcenter_hostname }}"
+        username:       "{{ vcenter_username }}"
+        password:       "{{ vcenter_password }}"
+        validate_certs: "{{ vcenter_validate_certs }}"
+        datacenter:     "{{ vcenter_datacenter }}"
+        name:           "{{ inventory_hostname }}"
+      delegate_to: localhost
+      ignore_errors: true

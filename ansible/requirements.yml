@@ -1,0 +1,24 @@
+---
+# COLECCIONES ANSIBLE REQUERIDAS
+# Instalar con: ansible-galaxy collection install -r requirements.yml
+
+collections:
+  # VMware vSphere - Módulos principales para gestión de VMs, clusters, etc.
+  - name: community.vmware
+    version: ">=4.0.0"
+
+  # Módulos generales (archivos, líneas, etc.)
+  - name: community.general
+    version: ">=8.0.0"
+
+  # Módulos POSIX (usuarios, authorized_keys, firewalld, etc.)
+  - name: ansible.posix
+    version: ">=1.5.0"
+
+  # Módulos Windows (WinRM, registry, servicios, etc.)
+  - name: ansible.windows
+    version: ">=2.0.0"
+
+  # Módulos de red (si se requiere automatización de switches)
+  - name: ansible.netcommon
+    version: ">=5.0.0"

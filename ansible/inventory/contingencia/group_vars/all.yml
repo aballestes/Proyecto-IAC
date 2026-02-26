@@ -1,0 +1,55 @@
+---
+# group_vars/all — Variables globales para todos los hosts
+# Aplica a ambos entornos (contingencia y producción)
+
+#------------------------------------------------------------------------------
+# Configuración de conexión vSphere para módulos Ansible VMware
+#------------------------------------------------------------------------------
+vcenter_hostname: "{{ lookup('env', 'VMWARE_HOST') }}"
+vcenter_username: "{{ lookup('env', 'VMWARE_USER') }}"
+vcenter_password: "{{ lookup('env', 'VMWARE_PASSWORD') }}"
+vcenter_validate_certs: false
+
+#------------------------------------------------------------------------------
+# Configuración SSH y WinRM
+#------------------------------------------------------------------------------
+ansible_ssh_private_key_file: "~/.ssh/iaac_rsa"
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
+# WinRM para Windows
+ansible_winrm_server_cert_validation: ignore
+ansible_winrm_transport: ntlm
+ansible_winrm_scheme: https
+ansible_port_winrm: 5986
+
+#------------------------------------------------------------------------------
+# Thresholds para health checks
+#------------------------------------------------------------------------------
+cpu_warning_threshold:    80   # porcentaje
+memory_warning_threshold: 85   # porcentaje
+disk_warning_threshold:   90   # porcentaje
+
+#------------------------------------------------------------------------------
+# Configuración de escalado (valores por defecto conservadores)
+#------------------------------------------------------------------------------
+# Incremento mínimo de CPU en hot-add
+cpu_scale_increment: 2
+
+# Incremento mínimo de RAM en hot-add (MB)
+memory_scale_increment_mb: 2048
+
+# Tamaño mínimo de disco a agregar (GB)
+disk_add_min_size_gb: 10
+
+#------------------------------------------------------------------------------
+# Configuración de snapshot pre-cambio
+#------------------------------------------------------------------------------
+snapshot_before_change: true
+snapshot_name_prefix: "pre-scale"
+snapshot_retention_days: 7
+
+#------------------------------------------------------------------------------
+# Notificaciones (configurar según herramienta disponible)
+#------------------------------------------------------------------------------
+notify_enabled: false
+notify_webhook_url: "https://teams.dominio.local/webhook/iaac-alerts"

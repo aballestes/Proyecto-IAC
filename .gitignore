@@ -1,0 +1,68 @@
+###############################################################################
+# .gitignore — Proyecto IaC VMware
+###############################################################################
+
+# ---- Terraform ----
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfplan
+*.tfstate
+*.tfstate.backup
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CRÍTICO: Nunca commitear credenciales
+terraform.tfvars          # archivos locales con secrets
+*.auto.tfvars
+*secrets*
+*credentials*
+
+# ---- Ansible ----
+*.retry
+ansible/inventory/**/*.vault
+.vault_pass
+vault_pass.txt
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# ---- SSH Keys ----
+*.pem
+*.key
+id_rsa
+id_ed25519
+iaac_rsa
+*.ppk
+
+# ---- Logs y temporales ----
+*.log
+/tmp/
+*.tmp
+*.swp
+*~
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- IDE ----
+.vscode/settings.json
+.idea/
+*.iml
+
+# ---- Outputs de scripts ----
+scripts/discovery/*.csv
+scripts/discovery/*.json
+scripts/discovery/*.hcl
+scripts/discovery/import-*.sh

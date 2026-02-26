@@ -1,0 +1,233 @@
+---
+# Role: vm-scale-resources
+# Descripción: Escala CPU, Memoria y/o Disco de VMs VMware en caliente
+#              cuando el SO y VMware Tools lo permiten.
+#
+# Variables requeridas (pasar al invocar el role):
+#   scale_vm_name:   Nombre de la VM en vCenter (obligatorio)
+#   scale_datacenter: Nombre del datacenter
+#
+# Variables opcionales:
+#   scale_cpu:       Nuevo número de vCPUs (omitir para no cambiar)
+#   scale_memory_mb: Nueva RAM en MB (omitir para no cambiar)
+#   scale_add_disk:  Dict con {size_gb, datastore, thin} (omitir para no agregar disco)
+#   scale_snapshot_before: true/false (default: true)
+#
+# Ejemplo de uso en playbook:
+#   - hosts: localhost
+#     roles:
+#       - role: vm-scale-resources
+#         vars:
+#           scale_vm_name: "vm-app-prod-01"
+#           scale_datacenter: "DC-Produccion"
+#           scale_cpu: 8
+#           scale_memory_mb: 16384
+
+- name: "SCALE | Verificar variables obligatorias"
+  ansible.builtin.assert:
+    that:
+      - scale_vm_name is defined
+      - scale_vm_name | length > 0
+      - scale_datacenter is defined
+    fail_msg: "Se requiere definir 'scale_vm_name' y 'scale_datacenter'"
+
+- name: "SCALE | Obtener información actual de la VM: {{ scale_vm_name }}"
+  community.vmware.vmware_guest_info:
+    hostname:         "{{ vcenter_hostname }}"
+    username:         "{{ vcenter_username }}"
+    password:         "{{ vcenter_password }}"
+    validate_certs:   "{{ vcenter_validate_certs }}"
+    datacenter:       "{{ scale_datacenter }}"
+    name:             "{{ scale_vm_name }}"
+  register: vm_current_info
+  delegate_to: localhost
+
+- name: "SCALE | Mostrar estado actual de la VM"
+  ansible.builtin.debug:
+    msg:
+      - "VM: {{ scale_vm_name }}"
+      - "Estado: {{ vm_current_info.instance.hw_power_status }}"
+      - "CPU actual: {{ vm_current_info.instance.hw_processor_count }} vCPUs"
+      - "RAM actual: {{ vm_current_info.instance.hw_memtotal_mb }} MB"
+      - "VMware Tools: {{ vm_current_info.instance.guest_tools_status }}"
+
+# ---- PRE-REQUISITO: VMware Tools debe estar corriendo para hot-add ----
+- name: "SCALE | Verificar que VMware Tools esté activo (hot-add requiere tools)"
+  ansible.builtin.assert:
+    that:
+      - vm_current_info.instance.guest_tools_status == "guestToolsRunning"
+    fail_msg: >
+      ADVERTENCIA: VMware Tools no está en estado 'guestToolsRunning' en {{ scale_vm_name }}.
+      El hot-add de CPU/RAM puede no funcionar correctamente.
+      Estado actual: {{ vm_current_info.instance.guest_tools_status }}
+  ignore_errors: "{{ scale_ignore_tools_check | default(false) }}"
+
+# ---- SNAPSHOT PREVIO AL CAMBIO ----
+- name: "SCALE | Crear snapshot de seguridad pre-escala"
+  community.vmware.vmware_guest_snapshot:
+    hostname:       "{{ vcenter_hostname }}"
+    username:       "{{ vcenter_username }}"
+    password:       "{{ vcenter_password }}"
+    validate_certs: "{{ vcenter_validate_certs }}"
+    datacenter:     "{{ scale_datacenter }}"
+    name:           "{{ scale_vm_name }}"
+    state:          present
+    snapshot_name:  "{{ snapshot_name_prefix | default('pre-scale') }}-{{ ansible_date_time.iso8601_basic_short }}"
+    description:    "Snapshot automático pre-escala IaC. CPU: {{ scale_cpu | default('sin cambio') }} | RAM: {{ scale_memory_mb | default('sin cambio') }}MB"
+    memory_dump:    false
+    quiesce:        false
+  delegate_to: localhost
+  when: scale_snapshot_before | default(true) | bool
+  register: snapshot_result
+
+- name: "SCALE | Snapshot creado"
+  ansible.builtin.debug:
+    msg: "Snapshot '{{ snapshot_result.snapshot_results.snapshot_name | default('N/A') }}' creado exitosamente"
+  when: snapshot_result is defined and not snapshot_result.failed | default(false)
+
+# ============================================================
+# ESCALADO DE CPU
+# ============================================================
+- name: "SCALE-CPU | Escalar vCPUs de {{ vm_current_info.instance.hw_processor_count }} → {{ scale_cpu }}"
+  community.vmware.vmware_guest:
+    hostname:       "{{ vcenter_hostname }}"
+    username:       "{{ vcenter_username }}"
+    password:       "{{ vcenter_password }}"
+    validate_certs: "{{ vcenter_validate_certs }}"
+    datacenter:     "{{ scale_datacenter }}"
+    name:           "{{ scale_vm_name }}"
+    hardware:
+      num_cpus:             "{{ scale_cpu }}"
+      num_cpu_cores_per_socket: "{{ scale_cores_per_socket | default(1) }}"
+      hotadd_cpu:           true
+      hotremove_cpu:        false
+  delegate_to: localhost
+  register: cpu_scale_result
+  when:
+    - scale_cpu is defined
+    - scale_cpu | int != vm_current_info.instance.hw_processor_count | int
+  notify: "Notify scale completed"
+
+- name: "SCALE-CPU | Sin cambio necesario en CPU"
+  ansible.builtin.debug:
+    msg: "CPU no requiere cambio: {{ vm_current_info.instance.hw_processor_count }} vCPUs (deseado: {{ scale_cpu | default('no especificado') }})"
+  when: scale_cpu is not defined or scale_cpu | int == vm_current_info.instance.hw_processor_count | int
+
+# ============================================================
+# ESCALADO DE MEMORIA
+# ============================================================
+- name: "SCALE-MEM | Escalar RAM {{ vm_current_info.instance.hw_memtotal_mb }}MB → {{ scale_memory_mb }}MB"
+  community.vmware.vmware_guest:
+    hostname:       "{{ vcenter_hostname }}"
+    username:       "{{ vcenter_username }}"
+    password:       "{{ vcenter_password }}"
+    validate_certs: "{{ vcenter_validate_certs }}"
+    datacenter:     "{{ scale_datacenter }}"
+    name:           "{{ scale_vm_name }}"
+    hardware:
+      memory_mb:    "{{ scale_memory_mb }}"
+      hotadd_memory: true
+  delegate_to: localhost
+  register: mem_scale_result
+  when:
+    - scale_memory_mb is defined
+    - scale_memory_mb | int != vm_current_info.instance.hw_memtotal_mb | int
+  notify: "Notify scale completed"
+
+- name: "SCALE-MEM | Resultado del escalado de memoria"
+  ansible.builtin.debug:
+    msg: "RAM escalada a {{ scale_memory_mb }}MB en {{ scale_vm_name }}"
+  when:
+    - scale_memory_mb is defined
+    - mem_scale_result is defined
+    - mem_scale_result.changed | default(false)
+
+# ============================================================
+# ADICIÓN DE DISCO (hot-plug)
+# No es posible extender disco existente en caliente de forma segura.
+# Se agrega un disco NUEVO — el SO deberá configurarlo (LVM/Partition).
+# ============================================================
+- name: "SCALE-DISK | Agregar disco adicional a {{ scale_vm_name }}"
+  community.vmware.vmware_guest_disk:
+    hostname:       "{{ vcenter_hostname }}"
+    username:       "{{ vcenter_username }}"
+    password:       "{{ vcenter_password }}"
+    validate_certs: "{{ vcenter_validate_certs }}"
+    datacenter:     "{{ scale_datacenter }}"
+    name:           "{{ scale_vm_name }}"
+    disk:
+      - size_gb:          "{{ scale_add_disk.size_gb }}"
+        type:             "{{ 'thin' if scale_add_disk.thin | default(true) else 'thick' }}"
+        datastore:        "{{ scale_add_disk.datastore | default(omit) }}"
+        state:            present
+        scsi_controller:  "{{ scale_add_disk.scsi_controller | default(0) }}"
+        unit_number:      "{{ scale_add_disk.unit_number | default(omit) }}"
+  delegate_to: localhost
+  register: disk_add_result
+  when:
+    - scale_add_disk is defined
+    - scale_add_disk.size_gb is defined
+  notify: "Notify scale completed"
+
+- name: "SCALE-DISK | Disco agregado correctamente"
+  ansible.builtin.debug:
+    msg: "Disco de {{ scale_add_disk.size_gb }}GB agregado a {{ scale_vm_name }}"
+  when:
+    - scale_add_disk is defined
+    - disk_add_result is defined
+    - disk_add_result.changed | default(false)
+
+# ---- Esperar a que el SO detecte el disco nuevo (Linux) ----
+- name: "SCALE-DISK | Forzar rescan de buses SCSI en el SO (Linux)"
+  ansible.builtin.shell: |
+    for host in /sys/class/scsi_host/host*/scan; do
+      echo "- - -" > "$host"
+    done
+    sleep 2
+  become: true
+  delegate_to: "{{ scale_vm_name }}"
+  when:
+    - scale_add_disk is defined
+    - disk_add_result.changed | default(false)
+    - "'Windows' not in vm_current_info.instance.hw_guest_full_name | default('')"
+  ignore_errors: true
+  register: scsi_rescan
+
+# ============================================================
+# VERIFICACIÓN POST-ESCALA
+# ============================================================
+- name: "SCALE | Verificar estado final de la VM post-escala"
+  community.vmware.vmware_guest_info:
+    hostname:       "{{ vcenter_hostname }}"
+    username:       "{{ vcenter_username }}"
+    password:       "{{ vcenter_password }}"
+    validate_certs: "{{ vcenter_validate_certs }}"
+    datacenter:     "{{ scale_datacenter }}"
+    name:           "{{ scale_vm_name }}"
+  register: vm_final_info
+  delegate_to: localhost
+
+- name: "SCALE | Resumen de cambios aplicados"
+  ansible.builtin.debug:
+    msg:
+      - "===== RESUMEN DE ESCALADO ====="
+      - "VM: {{ scale_vm_name }}"
+      - "CPU: {{ vm_current_info.instance.hw_processor_count }} → {{ vm_final_info.instance.hw_processor_count }} vCPUs"
+      - "RAM: {{ vm_current_info.instance.hw_memtotal_mb }}MB → {{ vm_final_info.instance.hw_memtotal_mb }}MB"
+      - "Disco nuevo: {{ scale_add_disk.size_gb | default('N/A') }}GB"
+      - "Estado VM: {{ vm_final_info.instance.hw_power_status }}"
+      - "=============================="
+
+# ---- Registrar cambio en log de auditoría ----
+- name: "SCALE | Registrar cambio en log de auditoría"
+  ansible.builtin.lineinfile:
+    path: "/var/log/ansible/iaac-scaling.log"
+    line: >
+      {{ ansible_date_time.iso8601 }} | SCALE | {{ scale_vm_name }} |
+      CPU: {{ vm_current_info.instance.hw_processor_count }}→{{ vm_final_info.instance.hw_processor_count }} |
+      RAM: {{ vm_current_info.instance.hw_memtotal_mb }}→{{ vm_final_info.instance.hw_memtotal_mb }}MB |
+      Disco: {{ scale_add_disk.size_gb | default('N/A') }}GB |
+      Operador: {{ lookup('env', 'USER') }}
+    create: true
+    mode: '0644'
+  delegate_to: localhost
