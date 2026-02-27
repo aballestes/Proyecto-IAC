@@ -200,6 +200,70 @@
             accent-color: #667eea;
         }
         
+        /* Tabla de contenido */
+        .toc {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 40px 0 50px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .toc h2 {
+            color: #667eea;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+            border-left: none;
+            padding-left: 0;
+        }
+        
+        .toc ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .toc li {
+            margin: 12px 0;
+            padding-left: 0;
+        }
+        
+        .toc a {
+            color: #333;
+            text-decoration: none;
+            display: block;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .toc a:hover {
+            background: white;
+            border-left-color: #667eea;
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .toc .toc-chapter {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #764ba2;
+        }
+        
+        .toc .toc-phase {
+            font-weight: 600;
+            color: #667eea;
+            margin-left: 20px;
+        }
+        
+        /* Page breaks para impresión */
+        .page-break {
+            page-break-before: always;
+        }
+        
         @media print {
             body {
                 background: white;
@@ -213,6 +277,23 @@
             
             table {
                 page-break-inside: avoid;
+            }
+            
+            /* Page breaks en capítulos principales */
+            h2 {
+                page-break-before: always;
+                padding-top: 20px;
+            }
+            
+            /* No page break en el primer capítulo */
+            h2:first-of-type {
+                page-break-before: avoid;
+            }
+            
+            /* Page breaks en fases */
+            h3:has-text("FASE") {
+                page-break-before: always;
+                padding-top: 20px;
             }
         }
         
@@ -285,9 +366,121 @@
 
 Implementar una capa de **Infraestructura como Código (IaC)** sobre dos datacenters VMware vSphere 8 existentes, usando **Terraform** como herramienta de aprovisionamiento declarativo y **Ansible** como herramienta de configuración y automatización operacional. La implementación se realiza primero en contingencia y luego en producción.
 
+**Duración total del proyecto:** 12 semanas  
+**Enfoque:** Implementación incremental por fases con validación continua
+
 ---
 
-## 2. ARQUITECTURA DE REFERENCIA
+## 2. PLAN DE TRABAJO POR FASES
+
+### FASE 0 — PREPARACIÓN Y DESCUBRIMIENTO (Semanas 1-2)
+**Duración estimada:** 10 días hábiles  
+**Prioridad:** CRÍTICA
+
+#### Tareas:
+| # | Tarea | Responsable | Días | Dependencia |
+|---|---|---|---|---|
+| 0.1 | Acceso a ambos vCenter 8 (API / UI) con credenciales de solo lectura inicial | Admin vSphere | 1 | — |
+| 0.2 | Ejecutar script de inventario automático de VMs (Python/PowerCLI) | IaC Engineer | 1 | 0.1 |
+| 0.3 | Clasificar VMs: críticas / desarrollo / pruebas / contingencia | Arquitecto | 2 | 0.2 |
+| 0.4 | Documentar naming conventions, tags, folders, resource pools existentes | IaC Engineer | 1.5 | 0.1 |
+| 0.5 | Validar conectividad red hacia todas las VMs (ping, SSH/WinRM) | Ops | 1 | 0.1 |
+| 0.6 | Verificar puertos: vCenter API 443, ESXi 902, SSH 22, WinRM 5985/5986 | Ops | 1 | 0.1 |
+| 0.7 | Configurar MV de control IaC (bastión/jump host) con acceso a ambos DCs | Ops | 1.5 | 0.5 |
+| 0.8 | Instalar toolchain en MV de control: Terraform, Ansible, Python, Git | IaC Engineer | 1 | 0.7 |
+| 0.9 | Configurar repositorio Git con estructura de proyecto y branching strategy | IaC Engineer | 0.5 | — |
+| 0.10 | Validar Hivecloud: confirmar que IaC no rompe enmascaramiento VLAN | Seguridad + Ops | 1.5 | 0.5 |
+
+#### Entregables Fase 0:
+- [ ] Inventario completo VMs (CSV/YAML) ambos datacenters
+- [ ] Diagrama de red actualizado con VLANs y datastores
+- [ ] MV control plane operativa con toolchain instalado
+- [ ] Repositorio Git inicializado con estructura IaC
+
+---
+
+### FASE 1 — IMPLEMENTACIÓN IaC en CONTINGENCIA (Semanas 3-5)
+**Duración estimada:** 15 días hábiles  
+**Prioridad:** ALTA — Validar sin riesgo para producción
+
+#### Tareas:
+| # | Tarea | Responsable | Días | Riesgo |
+|---|---|---|---|---|
+| 1.1 | Configurar Terraform backend (state file remoto: S3/MinIO/NFS) | IaC Engineer | 1 | BAJO |
+| 1.2 | Terraform: importar recursos existentes contingencia (terraform import) | IaC Engineer | 4 | MEDIO |
+| 1.3 | Terraform: crear módulo \`vsphere-vm\` parametrizable (CPU/MEM/DISK) | IaC Engineer | 2.5 | BAJO |
+| 1.4 | Terraform: crear módulo \`vsphere-cluster-compute\` | IaC Engineer | 1.5 | BAJO |
+| 1.5 | Ansible: inventario dinámico vSphere (plugin \`community.vmware\`) | IaC Engineer | 1.5 | BAJO |
+| 1.6 | Ansible: playbook \`vm-health-check.yml\` (ping, recursos, servicios) | IaC Engineer | 1 | BAJO |
+| 1.7 | Ansible: role \`vm-scale-resources\` (CPU hot-add, RAM hot-add, disk) | IaC Engineer | 2.5 | MEDIO |
+| 1.8 | Testing completo en contingencia: escalar 5-8 VMs piloto | IaC Engineer + Ops | 2 | BAJO |
+
+#### Entregables Fase 1:
+- [ ] Estado Terraform de contingencia capturado y versionado
+- [ ] 30 VMs contingencia gestionadas por Terraform (importadas)
+- [ ] Playbook de escalado de recursos funcional y validado
+- [ ] Inventario dinámico Ansible operativo
+
+---
+
+### FASE 2 — IMPLEMENTACIÓN IaC en PRODUCCIÓN (Semanas 6-9)
+**Duración estimada:** 20 días hábiles  
+**Prioridad:** ALTA — Ejecutar con ventanas de mantenimiento
+
+#### Tareas:
+| # | Tarea | Responsable | Días | Riesgo |
+|---|---|---|---|---|
+| 2.1 | Terraform: importar recursos producción cluster-app (270 VMs aprox) | IaC Engineer | 6 | ALTO — ventana |
+| 2.2 | Terraform: importar recursos producción cluster-db (30 VMs críticas) | IaC Engineer | 4 | ALTO — ventana |
+| 2.3 | Ansible: inventario dinámico producción separado por grupos (crítico/dev/test) | IaC Engineer | 2 | BAJO |
+| 2.4 | Ansible: playbooks diferenciados por tipo de VM (Linux/Windows) | IaC Engineer | 2 | BAJO |
+| 2.5 | Implementar pipeline CI/CD (GitLab/GitHub Actions) plan/apply con aprobación | DevOps | 3 | MEDIO |
+| 2.6 | Runbooks de escalado para equipo de operaciones | IaC Engineer | 1 | BAJO |
+| 2.7 | Capacitación del equipo de operaciones en uso de playbooks | IaC Lead | 2 | BAJO |
+
+#### Entregables Fase 2:
+- [ ] 300 VMs producción gestionadas por Terraform
+- [ ] Pipeline CI/CD operativo con gates de aprobación
+- [ ] Runbooks documentados para operaciones diarias
+- [ ] Equipo capacitado en uso de herramientas IaC
+
+---
+
+### FASE 3 — AUTOMATIZACIÓN AVANZADA Y TKG (Semanas 10-12)
+**Duración estimada:** 15 días hábiles  
+**Prioridad:** MEDIA
+
+#### Tareas:
+| # | Tarea | Responsable | Días |
+|---|---|---|---|
+| 3.1 | Despliegue TKG Supervisor Cluster en producción (vSphere Foundation) | K8s Architect | 5 |
+| 3.2 | Namespace Kubernetes para cargas de trabajo dev/test | K8s Architect | 2 |
+| 3.3 | Ansible: playbooks de monitoreo y alertas (integración Zabbix/Prometheus) | IaC Engineer | 3 |
+| 3.4 | Automatización de snapshots y backups pre-escala | IaC Engineer | 2 |
+| 3.5 | Documentación final completa del proyecto | IaC Engineer | 2 |
+| 3.6 | Capacitación avanzada y transferencia de conocimiento | IaC Lead | 1 |
+
+---
+
+## 3. CRONOGRAMA RESUMEN (GANTT)
+
+\`\`\`
+          S1  S2  S3  S4  S5  S6  S7  S8  S9  S10 S11 S12
+FASE 0:  [=======]
+FASE 1:          [===============]
+FASE 2:                          [====================]
+FASE 3:                                              [===============]
+\`\`\`
+
+**Hitos principales:**
+- **Semana 2:** Infraestructura de control lista
+- **Semana 5:** Contingencia bajo IaC
+- **Semana 9:** Producción bajo IaC
+- **Semana 12:** Proyecto completo + TKG operativo
+
+---
+
+## 4. ARQUITECTURA DE REFERENCIA
 
 \`\`\`
 ┌─────────────────────────────────────────────────────────────────┐
@@ -333,11 +526,15 @@ Implementar una capa de **Infraestructura como Código (IaC)** sobre dos datacen
 
 ---
 
-## 3. INVENTARIO INICIAL DE ACTIVOS
+\`\`\`
+
+---
+
+## 5. INVENTARIO INICIAL DE ACTIVOS
 
 | Componente | Producción | Contingencia |
 |---|---|---|
-| vCenter | vcenter-prod.dominio.local | vcenter-cont.dominio.local |
+| vCenter | vcsa.gnb.loc | vcsac.gnb.loc |
 | Cluster App | cluster-app (5 hosts) | N/A |
 | Cluster DB | cluster-db (2 hosts) | N/A |
 | Cluster Cont. | N/A | cluster-cont (2 hosts) |
@@ -347,106 +544,6 @@ Implementar una capa de **Infraestructura como Código (IaC)** sobre dos datacen
 | Red | vDS configurado | vDS configurado |
 | Microseg. | Hivecloud | Hivecloud |
 | Licencia | vSphere Foundation (TKG) | vSphere Foundation (TKG) |
-
----
-
-## 4. PLAN DE TRABAJO POR FASES
-
-### FASE 0 — PREPARACIÓN Y DESCUBRIMIENTO (Semana 1)
-**Duración estimada:** 5 días hábiles  
-**Prioridad:** CRÍTICA
-
-#### Tareas:
-| # | Tarea | Responsable | Días | Dependencia |
-|---|---|---|---|---|
-| 0.1 | Acceso a ambos vCenter 8 (API / UI) con credenciales de solo lectura inicial | Admin vSphere | 1 | — |
-| 0.2 | Ejecutar script de inventario automático de VMs (Python/PowerCLI) | IaC Engineer | 1 | 0.1 |
-| 0.3 | Clasificar VMs: críticas / desarrollo / pruebas / contingencia | Arquitecto | 1 | 0.2 |
-| 0.4 | Documentar naming conventions, tags, folders, resource pools existentes | IaC Engineer | 1 | 0.1 |
-| 0.5 | Validar conectividad red hacia todas las VMs (ping, SSH/WinRM) | Ops | 1 | 0.1 |
-| 0.6 | Verificar puertos: vCenter API 443, ESXi 902, SSH 22, WinRM 5985/5986 | Ops | 1 | 0.1 |
-| 0.7 | Configurar MV de control IaC (bastión/jump host) con acceso a ambos DCs | Ops | 1 | 0.5 |
-| 0.8 | Instalar toolchain en MV de control: Terraform, Ansible, Python, Git | IaC Engineer | 0.5 | 0.7 |
-| 0.9 | Configurar repositorio Git con estructura de proyecto y branching strategy | IaC Engineer | 0.5 | — |
-| 0.10 | Validar Hivecloud: confirmar que IaC no rompe enmascaramiento VLAN | Seguridad + Ops | 1 | 0.5 |
-
-#### Entregables Fase 0:
-- [ ] Inventario completo VMs (CSV/YAML) ambos datacenters
-- [ ] Diagrama de red actualizado con VLANs y datastores
-- [ ] MV control plane operativa con toolchain instalado
-- [ ] Repositorio Git inicializado con estructura IaC
-
----
-
-### FASE 1 — IMPLEMENTACIÓN IaC en CONTINGENCIA (Semanas 2-3)
-**Duración estimada:** 8 días hábiles  
-**Prioridad:** ALTA — Validar sin riesgo para producción
-
-#### Tareas:
-| # | Tarea | Responsable | Días | Riesgo |
-|---|---|---|---|---|
-| 1.1 | Configurar Terraform backend (state file remoto: S3/MinIO/NFS) | IaC Engineer | 0.5 | BAJO |
-| 1.2 | Terraform: importar recursos existentes contingencia (terraform import) | IaC Engineer | 2 | MEDIO |
-| 1.3 | Terraform: crear módulo \`vsphere-vm\` parametrizable (CPU/MEM/DISK) | IaC Engineer | 1.5 | BAJO |
-| 1.4 | Terraform: crear módulo \`vsphere-cluster-compute\` | IaC Engineer | 1 | BAJO |
-| 1.5 | Ansible: inventario dinámico vSphere (plugin \`community.vmware\`) | IaC Engineer | 1 | BAJO |
-| 1.6 | Ansible: playbook \`vm-health-check.yml\` (ping, recursos, servicios) | IaC Engineer | 0.5 | BAJO |
-| 1.7 | Ansible: role \`vm-scale-resources\` (CPU hot-add, RAM hot-add, disk) | IaC Engineer | 1.5 | MEDIO |
-| 1.8 | Testing completo en contingencia: escalar 3-5 VMs piloto | IaC Engineer + Ops | 1 | BAJO |
-
-#### Entregables Fase 1:
-- [ ] Estado Terraform de contingencia capturado y versionado
-- [ ] 30 VMs contingencia gestionadas por Terraform (importadas)
-- [ ] Playbook de escalado de recursos funcional y validado
-- [ ] Inventario dinámico Ansible operativo
-
----
-
-### FASE 2 — IMPLEMENTACIÓN IaC en PRODUCCIÓN (Semanas 4-6)
-**Duración estimada:** 10 días hábiles  
-**Prioridad:** ALTA — Ejecutar con ventanas de mantenimiento
-
-#### Tareas:
-| # | Tarea | Responsable | Días | Riesgo |
-|---|---|---|---|---|
-| 2.1 | Terraform: importar recursos producción cluster-app (270 VMs aprox) | IaC Engineer | 3 | ALTO — ventana |
-| 2.2 | Terraform: importar recursos producción cluster-db (30 VMs críticas) | IaC Engineer | 2 | ALTO — ventana |
-| 2.3 | Ansible: inventario dinámico producción separado por grupos (crítico/dev/test) | IaC Engineer | 1 | BAJO |
-| 2.4 | Ansible: playbooks diferenciados por tipo de VM (Linux/Windows) | IaC Engineer | 1.5 | BAJO |
-| 2.5 | Implementar pipeline CI/CD (GitLab/GitHub Actions) plan/apply con aprobación | DevOps | 2 | MEDIO |
-| 2.6 | Runbooks de escalado para equipo de operaciones | IaC Engineer | 0.5 | BAJO |
-
-#### Entregables Fase 2:
-- [ ] 300 VMs producción gestionadas por Terraform
-- [ ] Pipeline CI/CD operativo con gates de aprobación
-- [ ] Runbooks documentados para operaciones diarias
-
----
-
-### FASE 3 — AUTOMATIZACIÓN AVANZADA Y TKG (Semana 7-8)
-**Duración estimada:** 8 días hábiles  
-**Prioridad:** MEDIA
-
-#### Tareas:
-| # | Tarea | Responsable | Días |
-|---|---|---|---|
-| 3.1 | Despliegue TKG Supervisor Cluster en producción (vSphere Foundation) | K8s Architect | 3 |
-| 3.2 | Namespace Kubernetes para cargas de trabajo dev/test | K8s Architect | 1 |
-| 3.3 | Ansible: playbooks de monitoreo y alertas (integración Zabbix/Prometheus) | IaC Engineer | 2 |
-| 3.4 | Automatización de snapshots y backups pre-escala | IaC Engineer | 1 |
-| 3.5 | Documentación final + capacitación equipo | IaC Engineer | 1 |
-
----
-
-## 5. CRONOGRAMA RESUMEN (GANTT)
-
-\`\`\`
-          S1    S2    S3    S4    S5    S6    S7    S8
-FASE 0:  [====]
-FASE 1:        [=========]
-FASE 2:                    [===============]
-FASE 3:                                    [=========]
-\`\`\`
 
 ---
 
@@ -592,6 +689,75 @@ Pipeline Stages:
 
         // Render markdown to HTML
         document.getElementById('content').innerHTML = marked.parse(markdownContent);
+        
+        // Generate Table of Contents
+        function generateTOC() {
+            const content = document.getElementById('content');
+            const headings = content.querySelectorAll('h2, h3');
+            let tocHTML = '<div class="toc"><h2>📑 TABLA DE CONTENIDO</h2><ul>';
+            
+            headings.forEach((heading, index) => {
+                const text = heading.textContent;
+                const id = 'section-' + index;
+                heading.id = id;
+                
+                // Determinar si es capítulo principal o fase
+                const isChapter = heading.tagName === 'H2';
+                const isPhase = text.includes('FASE');
+                
+                let cssClass = '';
+                if (isChapter) {
+                    cssClass = 'toc-chapter';
+                } else if (isPhase) {
+                    cssClass = 'toc-phase';
+                }
+                
+                tocHTML += `<li><a href="#${id}" class="${cssClass}">${text}</a></li>`;
+            });
+            
+            tocHTML += '</ul></div>';
+            
+            // Insertar la TOC después del primer h2 (Resumen Ejecutivo)
+            const firstH2 = content.querySelector('h2');
+            if (firstH2 && firstH2.nextElementSibling) {
+                // Encontrar el hr después del resumen ejecutivo
+                let insertPoint = firstH2.nextElementSibling;
+                while (insertPoint && insertPoint.tagName !== 'HR') {
+                    insertPoint = insertPoint.nextElementSibling;
+                }
+                if (insertPoint) {
+                    insertPoint.insertAdjacentHTML('afterend', tocHTML);
+                } else {
+                    // Si no hay HR, insertar después del primer párrafo
+                    firstH2.nextElementSibling.insertAdjacentHTML('afterend', tocHTML);
+                }
+            }
+        }
+        
+        // Add page-break class to main chapters and phases
+        function addPageBreaks() {
+            const content = document.getElementById('content');
+            const h2Elements = content.querySelectorAll('h2');
+            const h3Elements = content.querySelectorAll('h3');
+            
+            // Add page-break to all h2 except the first one
+            h2Elements.forEach((h2, index) => {
+                if (index > 0) {
+                    h2.classList.add('page-break');
+                }
+            });
+            
+            // Add page-break to all h3 that contain "FASE"
+            h3Elements.forEach(h3 => {
+                if (h3.textContent.includes('FASE')) {
+                    h3.classList.add('page-break');
+                }
+            });
+        }
+        
+        // Generate TOC after content is rendered
+        generateTOC();
+        addPageBreaks();
         
         // Make checkboxes interactive
         document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {

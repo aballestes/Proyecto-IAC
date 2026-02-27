@@ -9,9 +9,120 @@
 
 Implementar una capa de **Infraestructura como Código (IaC)** sobre dos datacenters VMware vSphere 8 existentes, usando **Terraform** como herramienta de aprovisionamiento declarativo y **Ansible** como herramienta de configuración y automatización operacional. La implementación se realiza primero en contingencia y luego en producción.
 
+**Duración total del proyecto:** 12 semanas  
+**Enfoque:** Implementación incremental por fases con validación continua
+
 ---
 
-## 2. ARQUITECTURA DE REFERENCIA
+## 2. PLAN DE TRABAJO POR FASES
+
+### FASE 0 — PREPARACIÓN Y DESCUBRIMIENTO (Semanas 1-2)
+**Duración estimada:** 10 días hábiles  
+**Prioridad:** CRÍTICA
+
+#### Tareas:
+| # | Tarea | Responsable | Días | Dependencia |
+|---|---|---|---|---|
+| 0.1 | Acceso a ambos vCenter 8 (API / UI) con credenciales de solo lectura inicial | Admin vSphere | 1 | — |
+| 0.2 | Ejecutar script de inventario automático de VMs (Python/PowerCLI) | IaC Engineer | 1 | 0.1 |
+| 0.3 | Clasificar VMs: críticas / desarrollo / pruebas / contingencia | Arquitecto | 2 | 0.2 |
+| 0.4 | Documentar naming conventions, tags, folders, resource pools existentes | IaC Engineer | 1.5 | 0.1 |
+| 0.5 | Validar conectividad red hacia todas las VMs (ping, SSH/WinRM) | Ops | 1 | 0.1 | 0.6 | Verificar puertos: vCenter API 443, ESXi 902, SSH 22, WinRM 5985/5986 | Ops | 1 | 0.1 |
+| 0.7 | Configurar MV de control IaC (bastión/jump host) con acceso a ambos DCs | Ops | 1.5 | 0.5 |
+| 0.8 | Instalar toolchain en MV de control: Terraform, Ansible, Python, Git | IaC Engineer | 1 | 0.7 |
+| 0.9 | Configurar repositorio Git con estructura de proyecto y branching strategy | IaC Engineer | 0.5 | — |
+| 0.10 | Validar Hivecloud: confirmar que IaC no rompe enmascaramiento VLAN | Seguridad + Ops | 1.5 | 0.5 |
+
+#### Entregables Fase 0:
+- [ ] Inventario completo VMs (CSV/YAML) ambos datacenters
+- [ ] Diagrama de red actualizado con VLANs y datastores
+- [ ] MV control plane operativa con toolchain instalado
+- [ ] Repositorio Git inicializado con estructura IaC
+
+---
+
+### FASE 1 — IMPLEMENTACIÓN IaC en CONTINGENCIA (Semanas 3-5)
+**Duración estimada:** 15 días hábiles  
+**Prioridad:** ALTA — Validar sin riesgo para producción
+
+#### Tareas:
+| # | Tarea | Responsable | Días | Riesgo |
+|---|---|---|---|---|
+| 1.1 | Configurar Terraform backend (state file remoto: S3/MinIO/NFS) | IaC Engineer | 1 | BAJO |
+| 1.2 | Terraform: importar recursos existentes contingencia (terraform import) | IaC Engineer | 4 | MEDIO |
+| 1.3 | Terraform: crear módulo `vsphere-vm` parametrizable (CPU/MEM/DISK) | IaC Engineer | 2.5 | BAJO |
+| 1.4 | Terraform: crear módulo `vsphere-cluster-compute` | IaC Engineer | 1.5 | BAJO |
+| 1.5 | Ansible: inventario dinámico vSphere (plugin `community.vmware`) | IaC Engineer | 1.5 | BAJO |
+| 1.6 | Ansible: playbook `vm-health-check.yml` (ping, recursos, servicios) | IaC Engineer | 1 | BAJO |
+| 1.7 | Ansible: role `vm-scale-resources` (CPU hot-add, RAM hot-add, disk) | IaC Engineer | 2.5 | MEDIO |
+| 1.8 | Testing completo en contingencia: escalar 5-8 VMs piloto | IaC Engineer + Ops | 2 | BAJO |
+
+#### Entregables Fase 1:
+- [ ] Estado Terraform de contingencia capturado y versionado
+- [ ] 30 VMs contingencia gestionadas por Terraform (importadas)
+- [ ] Playbook de escalado de recursos funcional y validado
+- [ ] Inventario dinámico Ansible operativo
+
+---
+
+### FASE 2 — IMPLEMENTACIÓN IaC en PRODUCCIÓN (Semanas 6-9)
+**Duración estimada:** 20 días hábiles  
+**Prioridad:** ALTA — Ejecutar con ventanas de mantenimiento
+
+#### Tareas:
+| # | Tarea | Responsable | Días | Riesgo |
+|---|---|---|---|---|
+| 2.1 | Terraform: importar recursos producción cluster-app (270 VMs aprox) | IaC Engineer | 6 | ALTO — ventana |
+| 2.2 | Terraform: importar recursos producción cluster-db (30 VMs críticas) | IaC Engineer | 4 | ALTO — ventana |
+| 2.3 | Ansible: inventario dinámico producción separado por grupos (crítico/dev/test) | IaC Engineer | 2 | BAJO |
+| 2.4 | Ansible: playbooks diferenciados por tipo de VM (Linux/Windows) | IaC Engineer | 2 | BAJO |
+| 2.5 | Implementar pipeline CI/CD (GitLab/GitHub Actions) plan/apply con aprobación | DevOps | 3 | MEDIO |
+| 2.6 | Runbooks de escalado para equipo de operaciones | IaC Engineer | 1 | BAJO |
+| 2.7 | Capacitación del equipo de operaciones en uso de playbooks | IaC Lead | 2 | BAJO |
+
+#### Entregables Fase 2:
+- [ ] 300 VMs producción gestionadas por Terraform
+- [ ] Pipeline CI/CD operativo con gates de aprobación
+- [ ] Runbooks documentados para operaciones diarias
+- [ ] Equipo capacitado en uso de herramientas IaC
+
+---
+
+### FASE 3 — AUTOMATIZACIÓN AVANZADA Y TKG (Semanas 10-12)
+**Duración estimada:** 15 días hábiles  
+**Prioridad:** MEDIA
+
+#### Tareas:
+| # | Tarea | Responsable | Días |
+|---|---|---|---|
+| 3.1 | Despliegue TKG Supervisor Cluster en producción (vSphere Foundation) | K8s Architect | 5 |
+| 3.2 | Namespace Kubernetes para cargas de trabajo dev/test | K8s Architect | 2 |
+| 3.3 | Ansible: playbooks de monitoreo y alertas (integración Zabbix/Prometheus) | IaC Engineer | 3 |
+| 3.4 | Automatización de snapshots y backups pre-escala | IaC Engineer | 2 |
+| 3.5 | Documentación final completa del proyecto | IaC Engineer | 2 |
+| 3.6 | Capacitación avanzada y transferencia de conocimiento | IaC Lead | 1 |
+
+---
+
+## 3. CRONOGRAMA RESUMEN (GANTT)
+
+```
+          S1  S2  S3  S4  S5  S6  S7  S8  S9  S10 S11 S12
+FASE 0:  [=======]
+FASE 1:          [===============]
+FASE 2:                          [====================]
+FASE 3:                                              [===============]
+```
+
+**Hitos principales:**
+- **Semana 2:** Infraestructura de control lista
+- **Semana 5:** Contingencia bajo IaC
+- **Semana 9:** Producción bajo IaC
+- **Semana 12:** Proyecto completo + TKG operativo
+
+---
+
+## 4. ARQUITECTURA DE REFERENCIA
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -57,7 +168,7 @@ Implementar una capa de **Infraestructura como Código (IaC)** sobre dos datacen
 
 ---
 
-## 3. INVENTARIO INICIAL DE ACTIVOS
+## 5. INVENTARIO INICIAL DE ACTIVOS
 
 | Componente | Producción | Contingencia |
 |---|---|---|
@@ -71,106 +182,6 @@ Implementar una capa de **Infraestructura como Código (IaC)** sobre dos datacen
 | Red | vDS configurado | vDS configurado |
 | Microseg. | Hivecloud | Hivecloud |
 | Licencia | vSphere Foundation (TKG) | vSphere Foundation (TKG) |
-
----
-
-## 4. PLAN DE TRABAJO POR FASES
-
-### FASE 0 — PREPARACIÓN Y DESCUBRIMIENTO (Semana 1)
-**Duración estimada:** 5 días hábiles  
-**Prioridad:** CRÍTICA
-
-#### Tareas:
-| # | Tarea | Responsable | Días | Dependencia |
-|---|---|---|---|---|
-| 0.1 | Acceso a ambos vCenter 8 (API / UI) con credenciales de solo lectura inicial | Admin vSphere | 1 | — |
-| 0.2 | Ejecutar script de inventario automático de VMs (Python/PowerCLI) | IaC Engineer | 1 | 0.1 |
-| 0.3 | Clasificar VMs: críticas / desarrollo / pruebas / contingencia | Arquitecto | 1 | 0.2 |
-| 0.4 | Documentar naming conventions, tags, folders, resource pools existentes | IaC Engineer | 1 | 0.1 |
-| 0.5 | Validar conectividad red hacia todas las VMs (ping, SSH/WinRM) | Ops | 1 | 0.1 |
-| 0.6 | Verificar puertos: vCenter API 443, ESXi 902, SSH 22, WinRM 5985/5986 | Ops | 1 | 0.1 |
-| 0.7 | Configurar MV de control IaC (bastión/jump host) con acceso a ambos DCs | Ops | 1 | 0.5 |
-| 0.8 | Instalar toolchain en MV de control: Terraform, Ansible, Python, Git | IaC Engineer | 0.5 | 0.7 |
-| 0.9 | Configurar repositorio Git con estructura de proyecto y branching strategy | IaC Engineer | 0.5 | — |
-| 0.10 | Validar Hivecloud: confirmar que IaC no rompe enmascaramiento VLAN | Seguridad + Ops | 1 | 0.5 |
-
-#### Entregables Fase 0:
-- [ ] Inventario completo VMs (CSV/YAML) ambos datacenters
-- [ ] Diagrama de red actualizado con VLANs y datastores
-- [ ] MV control plane operativa con toolchain instalado
-- [ ] Repositorio Git inicializado con estructura IaC
-
----
-
-### FASE 1 — IMPLEMENTACIÓN IaC en CONTINGENCIA (Semanas 2-3)
-**Duración estimada:** 8 días hábiles  
-**Prioridad:** ALTA — Validar sin riesgo para producción
-
-#### Tareas:
-| # | Tarea | Responsable | Días | Riesgo |
-|---|---|---|---|---|
-| 1.1 | Configurar Terraform backend (state file remoto: S3/MinIO/NFS) | IaC Engineer | 0.5 | BAJO |
-| 1.2 | Terraform: importar recursos existentes contingencia (terraform import) | IaC Engineer | 2 | MEDIO |
-| 1.3 | Terraform: crear módulo `vsphere-vm` parametrizable (CPU/MEM/DISK) | IaC Engineer | 1.5 | BAJO |
-| 1.4 | Terraform: crear módulo `vsphere-cluster-compute` | IaC Engineer | 1 | BAJO |
-| 1.5 | Ansible: inventario dinámico vSphere (plugin `community.vmware`) | IaC Engineer | 1 | BAJO |
-| 1.6 | Ansible: playbook `vm-health-check.yml` (ping, recursos, servicios) | IaC Engineer | 0.5 | BAJO |
-| 1.7 | Ansible: role `vm-scale-resources` (CPU hot-add, RAM hot-add, disk) | IaC Engineer | 1.5 | MEDIO |
-| 1.8 | Testing completo en contingencia: escalar 3-5 VMs piloto | IaC Engineer + Ops | 1 | BAJO |
-
-#### Entregables Fase 1:
-- [ ] Estado Terraform de contingencia capturado y versionado
-- [ ] 30 VMs contingencia gestionadas por Terraform (importadas)
-- [ ] Playbook de escalado de recursos funcional y validado
-- [ ] Inventario dinámico Ansible operativo
-
----
-
-### FASE 2 — IMPLEMENTACIÓN IaC en PRODUCCIÓN (Semanas 4-6)
-**Duración estimada:** 10 días hábiles  
-**Prioridad:** ALTA — Ejecutar con ventanas de mantenimiento
-
-#### Tareas:
-| # | Tarea | Responsable | Días | Riesgo |
-|---|---|---|---|---|
-| 2.1 | Terraform: importar recursos producción cluster-app (270 VMs aprox) | IaC Engineer | 3 | ALTO — ventana |
-| 2.2 | Terraform: importar recursos producción cluster-db (30 VMs críticas) | IaC Engineer | 2 | ALTO — ventana |
-| 2.3 | Ansible: inventario dinámico producción separado por grupos (crítico/dev/test) | IaC Engineer | 1 | BAJO |
-| 2.4 | Ansible: playbooks diferenciados por tipo de VM (Linux/Windows) | IaC Engineer | 1.5 | BAJO |
-| 2.5 | Implementar pipeline CI/CD (GitLab/GitHub Actions) plan/apply con aprobación | DevOps | 2 | MEDIO |
-| 2.6 | Runbooks de escalado para equipo de operaciones | IaC Engineer | 0.5 | BAJO |
-
-#### Entregables Fase 2:
-- [ ] 300 VMs producción gestionadas por Terraform
-- [ ] Pipeline CI/CD operativo con gates de aprobación
-- [ ] Runbooks documentados para operaciones diarias
-
----
-
-### FASE 3 — AUTOMATIZACIÓN AVANZADA Y TKG (Semana 7-8)
-**Duración estimada:** 8 días hábiles  
-**Prioridad:** MEDIA
-
-#### Tareas:
-| # | Tarea | Responsable | Días |
-|---|---|---|---|
-| 3.1 | Despliegue TKG Supervisor Cluster en producción (vSphere Foundation) | K8s Architect | 3 |
-| 3.2 | Namespace Kubernetes para cargas de trabajo dev/test | K8s Architect | 1 |
-| 3.3 | Ansible: playbooks de monitoreo y alertas (integración Zabbix/Prometheus) | IaC Engineer | 2 |
-| 3.4 | Automatización de snapshots y backups pre-escala | IaC Engineer | 1 |
-| 3.5 | Documentación final + capacitación equipo | IaC Engineer | 1 |
-
----
-
-## 5. CRONOGRAMA RESUMEN (GANTT)
-
-```
-          S1    S2    S3    S4    S5    S6    S7    S8
-FASE 0:  [====]
-FASE 1:        [=========]
-FASE 2:                    [===============]
-FASE 3:                                    [=========]
-```
 
 ---
 

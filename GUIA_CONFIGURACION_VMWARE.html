@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de Configuración VMware para IaC</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 50px;
+            text-align: center;
+            position: relative;
+        }
+        
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6);
+        }
+        
+        header h1 {
+            font-size: 2.8em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header p {
+            font-size: 1.3em;
+            opacity: 0.95;
+        }
+        
+        .toc {
+            background: #f3f4f6;
+            padding: 30px;
+            border-bottom: 3px solid #3b82f6;
+        }
+        
+        .toc h2 {
+            color: #1e3a8a;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .toc-item {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: #1e3a8a;
+            display: block;
+            font-weight: 500;
+        }
+        
+        .toc-item:hover {
+            transform: translateX(5px);
+            border-left-color: #10b981;
+            box-shadow: 0 3px 10px rgba(59, 130, 246, 0.2);
+        }
+        
+        .content {
+            padding: 50px;
+        }
+        
+        h2 {
+            color: #1e3a8a;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 15px;
+            margin: 40px 0 25px 0;
+            font-size: 2em;
+        }
+        
+        h3 {
+            color: #1e40af;
+            margin: 30px 0 20px 0;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+        }
+        
+        h3::before {
+            content: '▸';
+            color: #3b82f6;
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        h4 {
+            color: #3b82f6;
+            margin: 25px 0 15px 0;
+            font-size: 1.2em;
+        }
+        
+        .step-box {
+            background: #f0f9ff;
+            border-left: 5px solid #3b82f6;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+        
+        .step-header {
+            font-weight: bold;
+            color: #1e40af;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-header::before {
+            content: '🔹';
+            margin-right: 10px;
+        }
+        
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 4px solid #3b82f6;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        
+        code {
+            background: #e5e7eb;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: #dc2626;
+        }
+        
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: #e2e8f0;
+        }
+        
+        .privilege-section {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .privilege-section h4 {
+            color: #059669;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .privilege-section h4::before {
+            content: '✅';
+            margin-right: 10px;
+        }
+        
+        .privilege-list {
+            margin-left: 25px;
+            margin-top: 10px;
+        }
+        
+        .warning-box {
+            background: #fef3c7;
+            border-left: 5px solid #f59e0b;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .warning-box::before {
+            content: '⚠️ IMPORTANTE:';
+            display: block;
+            font-weight: bold;
+            color: #92400e;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .success-box {
+            background: #d1fae5;
+            border-left: 5px solid #10b981;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .checklist {
+            background: #f9fafb;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .checklist-item {
+            padding: 10px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #d1d5db;
+            display: flex;
+            align-items: center;
+        }
+        
+        .checklist-item::before {
+            content: '☐';
+            font-size: 1.5em;
+            margin-right: 15px;
+            color: #6b7280;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9fafb;
+        }
+        
+        tr:hover {
+            background: #f0f9ff;
+        }
+        
+        .note {
+            background: #e0f2fe;
+            border-left: 4px solid #0284c7;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .note::before {
+            content: '📝 ';
+            font-weight: bold;
+        }
+        
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+        
+        li {
+            margin: 8px 0;
+            line-height: 1.7;
+        }
+        
+        .command-example {
+            background: #f8fafc;
+            border: 2px dashed #94a3b8;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Consolas', monospace;
+        }
+        
+        .section-divider {
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #10b981, #8b5cf6);
+            margin: 40px 0;
+            border-radius: 2px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            
+            header {
+                padding: 30px 20px;
+            }
+            
+            header h1 {
+                font-size: 2em;
+            }
+            
+            .toc-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛠️ GUÍA DE CONFIGURACIÓN VMWARE PARA IaC</h1>
+            <p>Paso 6: Prerrequisitos Técnicos en vCenter/vSphere</p>
+        </header>
+        
+        <div class="toc">
+            <h2>📋 Índice de Contenidos</h2>
+            <div class="toc-grid">
+                <a href="#usuarios" class="toc-item">1. Usuarios de Servicio</a>
+                <a href="#roles" class="toc-item">2. Roles Personalizados</a>
+                <a href="#permisos" class="toc-item">3. Asignación de Permisos</a>
+                <a href="#red" class="toc-item">4. Configuración de Red/Firewall</a>
+                <a href="#vmtools" class="toc-item">5. Validación VMware Tools</a>
+                <a href="#hotadd" class="toc-item">6. Configuración Hot-Add</a>
+                <a href="#validacion" class="toc-item">7. Validación Final</a>
+            </div>
+        </div>
+        
+        <div class="content">
+            <h2 id="usuarios">1. USUARIOS DE SERVICIO</h2>
+            
+            <h3>1.1 Crear Usuario para Terraform (vCenter SSO)</h3>
+            
+            <div class="step-box">
+                <div class="step-header">En vCenter UI:</div>
+                <ol>
+                    <li>Menú → <strong>Administration</strong> → <strong>Single Sign-On</strong> → <strong>Users and Groups</strong></li>
+                    <li>Domain: <code>vsphere.local</code> (o tu dominio SSO)</li>
+                    <li>Click "<strong>Add User</strong>" (botón +)</li>
+                </ol>
+                
+                <table style="margin-top: 15px;">
+                    <tr>
+                        <th>Campo</th>
+                        <th>Valor</th>
+                    </tr>
+                    <tr>
+                        <td>Username</td>
+                        <td><strong>svc-terraform</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Password</td>
+                        <td>[Generar password seguro - mín 15 caracteres]</td>
+                    </tr>
+                    <tr>
+                        <td>Email</td>
+                        <td>infraestructura@tudominio.com</td>
+                    </tr>
+                    <tr>
+                        <td>First Name</td>
+                        <td>Terraform</td>
+                    </tr>
+                    <tr>
+                        <td>Last Name</td>
+                        <td>Service Account</td>
+                    </tr>
+                    <tr>
+                        <td>Description</td>
+                        <td>Service account for Infrastructure as Code - Terraform provisioning</td>
+                    </tr>
+                </table>
+                
+                <p style="margin-top: 15px;">4. Click "<strong>Add</strong>"</p>
+            </div>
+            
+            <div class="note">
+                <strong>Guardar credenciales de forma segura:</strong>
+            </div>
+            
+            <pre># En el Jump Host, crear archivo de variables de entorno
+# NO versionar en Git
+echo 'VSPHERE_USER=svc-terraform@vsphere.local' >> ~/.terraform_vsphere_creds
+echo 'VSPHERE_PASSWORD=TU_PASSWORD_SEGURO' >> ~/.terraform_vsphere_creds
+echo 'VSPHERE_SERVER=vcenter-cont.dominio.local' >> ~/.terraform_vsphere_creds
+chmod 600 ~/.terraform_vsphere_creds</pre>
+            
+            <div class="section-divider"></div>
+            
+            <h3>1.2 Crear Usuario para Ansible (vCenter SSO)</h3>
+            
+            <div class="step-box">
+                <div class="step-header">En vCenter UI:</div>
+                <ol>
+                    <li>Menú → <strong>Administration</strong> → <strong>Single Sign-On</strong> → <strong>Users and Groups</strong></li>
+                    <li>Domain: <code>vsphere.local</code></li>
+                    <li>Click "<strong>Add User</strong>"</li>
+                </ol>
+                
+                <table style="margin-top: 15px;">
+                    <tr>
+                        <th>Campo</th>
+                        <th>Valor</th>
+                    </tr>
+                    <tr>
+                        <td>Username</td>
+                        <td><strong>svc-ansible</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Password</td>
+                        <td>[Generar password seguro - mín 15 caracteres]</td>
+                    </tr>
+                    <tr>
+                        <td>Email</td>
+                        <td>infraestructura@tudominio.com</td>
+                    </tr>
+                    <tr>
+                        <td>First Name</td>
+                        <td>Ansible</td>
+                    </tr>
+                    <tr>
+                        <td>Last Name</td>
+                        <td>Service Account</td>
+                    </tr>
+                    <tr>
+                        <td>Description</td>
+                        <td>Service account for Ansible automation and configuration management</td>
+                    </tr>
+                </table>
+                
+                <p style="margin-top: 15px;">4. Click "<strong>Add</strong>"</p>
+            </div>
+            
+            <div class="section-divider"></div>
+            
+            <h2 id="roles">2. ROLES PERSONALIZADOS</h2>
+            
+            <h3>2.1 Crear Rol "IaC-Operator" para Terraform</h3>
+            
+            <div class="step-box">
+                <div class="step-header">En vCenter UI:</div>
+                <ol>
+                    <li>Menú → <strong>Administration</strong> → <strong>Access Control</strong> → <strong>Roles</strong></li>
+                    <li>Click botón "<strong>+</strong>" (Add Role)</li>
+                    <li>Role name: <strong>IaC-Operator</strong></li>
+                    <li>Description: <em>Minimum privilege role for Terraform infrastructure provisioning</em></li>
+                </ol>
+            </div>
+            
+            <div class="step-header" style="margin: 25px 0 15px 0;">Seleccionar los siguientes privilegios (marcar checkbox):</div>
+            
+            <div class="privilege-section">
+                <h4>A. Datastore</h4>
+                <div class="privilege-list">
+                    <div>✅ Datastore</div>
+                    <div style="margin-left: 25px;">
+                        ✅ Allocate space<br>
+                        ✅ Browse datastore<br>
+                        ✅ Low level file operations<br>
+                        ✅ Remove file
+                    </div>
+                </div>
+            </div>
+            
+            <div class="privilege-section">
+                <h4>B. Network</h4>
+                <div class="privilege-list">
+                    <div>✅ Network</div>
+                    <div style="margin-left: 25px;">
+                        ✅ Assign network
+                    </div>
+                </div>
+            </div>
+            
+            <div class="privilege-section">
+                <h4>C. Resource</h4>
+                <div class="privilege-list">
+                    <div>✅ Resource</div>
+                    <div style="margin-left: 25px;">
+                        ✅ Assign virtual machine to resource pool<br>
+                        ✅ Migrate powered off virtual machine<br>
+                        ✅ Migrate powered on virtual machine
+                    </div>
+                </div>
+            </div>
+            
+            <div class="privilege-section">
+                <h4>D. Virtual Machine → Configuration</h4>
+                <div class="privilege-list">
+                    <div>✅ Virtual machine → ✅ Configuration</div>
+                    <div style="margin-left: 25px;">
+                        ✅ Add existing disk<br>
+                        ✅ Add new disk<br>
+                        ✅ Add or remove device<br>
+                        ✅ Advanced configuration<br>
+                        ✅ Change CPU count<br>
+                        ✅ Change Memory<br>
+                        ✅ Change Settings<br>
+                        ✅ Change resource<br>
+                        ✅ Extend virtual disk<br>
+                        ✅ Modify device settings<br>
+                        ✅ Remove disk<br>
+                        ✅ Rename<br>
+                        ✅ Reset guest information<br>
+                        ✅ Set annotation<br>
+                        ✅ Settings
+                    </div>
+                </div>
+            </div>
+            
+            <div class="privilege-section">
+                <h4>E. Virtual Machine → Interaction</h4>
+                <div class="privilege-list">
+                    <div>✅ Virtual machine → ✅ Interaction</div>
+                    <div style="margin-left: 25px;">
+                        ✅ Configure CD media<br>
+                        ✅ Power Off<br>
+                        ✅ Power On<br>
+                        ✅ Reset<br>
+                        ✅ Suspend
+                    </div>
+                </div>
+            </div>
+            
+            <div class="privilege-section">
+                <h4>F. Virtual Machine → Inventory</h4>
+                <div class="privilege-list">
+                    <div>✅ Virtual machine → ✅ Inventory</div>
+                    <div style="margin-left: 25px;">
+                        ✅ Create from existing<br>
+                        ✅ Create new<br>
+                        ✅ Move<br>
+                        ✅ Register<br>
+                        ✅ Remove<br>
+                        ✅ Unregister
+                    </div>
+                </div>
+            </div>
+            
+            <div class="privilege-section">
+                <h4>G. Virtual Machine → Provisioning</h4>
+                <div class="privilege-list">
+                    <div>✅ Virtual machine → ✅ Provisioning</div>
+                    <div style="margin-left: 25px;">
+                        ✅ Allow disk access<br>
+                        ✅ Clone virtual machine<br>
+                        ✅ Customize guest<br>
+                        ✅ Deploy template<br>
+                        ✅ Mark as template<br>
+                        ✅ Modify customization specification<br>
+                        ✅ Read customization specifications
+                    </div>
+                </div>
+            </div>
+            
+            <div class="privilege-section">
+                <h4>H. Virtual Machine → Snapshot Management</h4>
+                <div class="privilege-list">
+                    <div>✅ Virtual machine → ✅ Snapshot management</div>
+                    <div style="margin-left: 25px;">
+                        ✅ Create snapshot<br>
+                        ✅ Remove snapshot<br>
+                        ✅ Revert to snapshot
+                    </div>
+                </div>
+            </div>
+            
+            <p style="margin-top: 20px;"><strong>5. Click "OK" para guardar el rol</strong></p>
+            
+            <div class="section-divider"></div>
+            
+            <h3>2.2 Crear Rol "IaC-ReadOnly-Plus" para Ansible</h3>
+            
+            <div class="step-box">
+                <div class="step-header">En vCenter UI:</div>
+                <ol>
+                    <li>Menú → <strong>Administration</strong> → <strong>Access Control</strong> → <strong>Roles</strong></li>
+                    <li>Click botón "<strong>+</strong>" (Add Role)</li>
+                    <li>Role name: <strong>IaC-ReadOnly-Plus</strong></li>
+                    <li>Description: <em>Read-Only with Guest Operations for Ansible automation</em></li>
+                </ol>
+            </div>
+            
+            <div class="privilege-section">
+                <h4>Permisos para Ansible</h4>
+                <div class="privilege-list">
+                    <div>✅ Virtual machine</div>
+                    <div style="margin-left: 25px;">
+                        ✅ Guest Operations<br>
+                        <div style="margin-left: 25px;">
+                            ✅ Guest operation modifications<br>
+                            ✅ Guest operation queries
+                        </div>
+                        ✅ Interaction<br>
+                        <div style="margin-left: 25px;">
+                            ✅ Power Off<br>
+                            ✅ Power On<br>
+                            ✅ Reset
+                        </div>
+                        ✅ Provisioning<br>
+                        <div style="margin-left: 25px;">
+                            ✅ Read customization specifications
+                        </div>
+                    </div>
+                    <div>✅ Global</div>
+                    <div style="margin-left: 25px;">
+                        ✅ Diagnostics (opcional para troubleshooting)
+                    </div>
+                </div>
+            </div>
+            
+            <p style="margin-top: 20px;"><strong>5. Click "OK" para guardar el rol</strong></p>
+            
+            <div class="section-divider"></div>
+            
+            <h2 id="permisos">3. ASIGNACIÓN DE PERMISOS</h2>
+            
+            <h3>3.1 Asignar permisos a svc-terraform</h3>
+            
+            <div class="step-box">
+                <div class="step-header">Para el Datacenter de CONTINGENCIA:</div>
+                <ol>
+                    <li>En vCenter UI, navegar a:<br>
+                        <code>Hosts and Clusters → DATACENTER CONTINGENCIA</code> (raíz del datacenter)</li>
+                    <li>Click derecho → <strong>Add Permission</strong></li>
+                    <li>En el diálogo:
+                        <ul>
+                            <li>Domain: <code>vsphere.local</code></li>
+                            <li>User/Group: Buscar y seleccionar <strong>"svc-terraform"</strong></li>
+                            <li>Assigned Role: <strong>IaC-Operator</strong></li>
+                        </ul>
+                    </li>
+                    <li>✅ <strong>IMPORTANTE:</strong> Marcar "<strong>Propagate to children</strong>"</li>
+                    <li>Click "<strong>OK</strong>"</li>
+                </ol>
+            </div>
+            
+            <div class="warning-box">
+                Para el Datacenter de PRODUCCIÓN, repetir los mismos pasos después de validar en contingencia.
+            </div>
+            
+            <div class="section-divider"></div>
+            
+            <h3>3.2 Asignar permisos a svc-ansible</h3>
+            
+            <div class="step-box">
+                <div class="step-header">Para ambos Datacenters:</div>
+                <ol>
+                    <li>En vCenter UI, navegar a:<br>
+                        <code>Hosts and Clusters → [Datacenter]</code></li>
+                    <li>Click derecho → <strong>Add Permission</strong></li>
+                    <li>En el diálogo:
+                        <ul>
+                            <li>Domain: <code>vsphere.local</code></li>
+                            <li>User/Group: Buscar y seleccionar <strong>"svc-ansible"</strong></li>
+                            <li>Assigned Role: <strong>IaC-ReadOnly-Plus</strong></li>
+                        </ul>
+                    </li>
+                    <li>✅ Marcar "<strong>Propagate to children</strong>"</li>
+                    <li>Click "<strong>OK</strong>"</li>
+                </ol>
+            </div>
+            
+            <div class="section-divider"></div>
+            
+            <h2 id="red">4. CONFIGURACIÓN DE RED/FIREWALL</h2>
+            
+            <h3>4.1 Identificar IP del Jump Host (MV Control)</h3>
+            
+            <div class="command-example">
+Ejemplo:<br>
+Jump Host IP: 192.168.10.50<br>
+vCenter Contingencia: 192.168.10.100<br>
+vCenter Producción: 192.168.20.100
+            </div>
+            
+            <h3>4.2 Reglas de Firewall Requeridas</h3>
+            
+            <div class="step-box">
+                <div class="step-header">Si tienen firewall centralizado (Fortigate, Palo Alto, etc.):</div>
+                <p>Crear las siguientes reglas:</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Regla</th>
+                        <th>Source</th>
+                        <th>Destination</th>
+                        <th>Ports</th>
+                        <th>Service</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>REGLA 1</strong><br>Jump → vCenter Cont.</td>
+                        <td>192.168.10.50</td>
+                        <td>192.168.10.100</td>
+                        <td>TCP 443, 902</td>
+                        <td>HTTPS, VMware-SDK</td>
+                    </tr>
+                    <tr>
+                        <td><strong>REGLA 2</strong><br>Jump → vCenter Prod.</td>
+                        <td>192.168.10.50</td>
+                        <td>192.168.20.100</td>
+                        <td>TCP 443, 902</td>
+                        <td>HTTPS, VMware-SDK</td>
+                    </tr>
+                    <tr>
+                        <td><strong>REGLA 3</strong><br>Jump → Hosts ESXi</td>
+                        <td>192.168.10.50</td>
+                        <td>[Rango IPs ESXi]</td>
+                        <td>TCP 443, 902</td>
+                        <td>HTTPS, VMware-SDK</td>
+                    </tr>
+                    <tr>
+                        <td><strong>REGLA 4</strong><br>Jump → VMs Linux</td>
+                        <td>192.168.10.50</td>
+                        <td>[Rango VMs]</td>
+                        <td>TCP 22</td>
+                        <td>SSH</td>
+                    </tr>
+                    <tr>
+                        <td><strong>REGLA 5</strong><br>Jump → VMs Windows</td>
+                        <td>192.168.10.50</td>
+                        <td>[Rango VMs Windows]</td>
+                        <td>TCP 5985, 5986</td>
+                        <td>WinRM</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>4.3 Firewall en hosts ESXi (si aplica)</h3>
+            
+            <div class="step-box">
+                <div class="step-header">Verificar que ESXi permite conexiones desde Jump Host:</div>
+                <pre># Desde el Jump Host, validar conectividad:
+curl -k https://esxi-host-ip:443
+curl -k https://esxi-host-ip:902</pre>
+            </div>
+            
+            <div class="note">
+                Si está bloqueado, modificar firewall ESXi vía SSH o vCenter Host Profile
+            </div>
+            
+            <pre># Desde SSH en cada ESXi:
+esxcli network firewall ruleset set --ruleset-id httpClient --enabled true
+esxcli network firewall ruleset set --ruleset-id vSphereClient --enabled true
+esxcli network firewall refresh</pre>
+            
+            <div class="section-divider"></div>
+            
+            <h2 id="vmtools">5. VALIDACIÓN VMWARE TOOLS</h2>
+            
+            <p style="font-size: 1.1em; margin: 20px 0;">
+                VMware Tools debe estar actualizado para hot-add y operaciones de Ansible.
+            </p>
+            
+            <h3>5.1 Verificar versión de VMware Tools en VMs</h3>
+            
+            <div class="step-box">
+                <div class="step-header">En vCenter UI:</div>
+                <ol>
+                    <li>VMs and Templates → Seleccionar una VM → <strong>Summary</strong></li>
+                    <li>Buscar "<strong>VMware Tools</strong>" en la sección VM Hardware</li>
+                    <li>Estado ideal: <span style="color: #10b981; font-weight: bold;">"Running (Current)"</span></li>
+                    <li>Si dice "Out of date" → <span style="color: #f59e0b;">actualizar</span></li>
+                </ol>
+            </div>
+            
+            <div class="step-header" style="margin: 25px 0 15px 0;">Script PowerCLI para validar todas las VMs:</div>
+            
+            <pre># Conectar a vCenter
+Connect-VIServer -Server vcenter-cont.dominio.local
+
+# Obtener VMs con VMware Tools desactualizadas
+Get-VM | Select Name, @{N='Tools Status';E={$_.ExtensionData.Guest.ToolsStatus}},
+               @{N='Tools Version';E={$_.ExtensionData.Guest.ToolsVersion}} | 
+         Where-Object {$_.'Tools Status' -ne 'toolsOk'} | 
+         Format-Table -AutoSize
+
+# Guardar en CSV para análisis
+Get-VM | Select Name, @{N='Tools Status';E={$_.ExtensionData.Guest.ToolsStatus}},
+               @{N='Tools Version';E={$_.ExtensionData.Guest.ToolsVersion}} | 
+         Export-Csv -Path "vm-tools-status.csv" -NoTypeInformation</pre>
+            
+            <h3>5.2 Actualizar VMware Tools (si es necesario)</h3>
+            
+            <div class="step-box">
+                <div class="step-header">Opción 1: Actualizar vía vCenter (recomendado):</div>
+                <ol>
+                    <li>Click derecho en la VM → <strong>Guest OS</strong> → <strong>Install VMware Tools</strong></li>
+                    <li>O usar "<strong>Update VMware Tools</strong>" si ya está instalado</li>
+                    <li>Seguir el asistente dentro del SO guest</li>
+                </ol>
+            </div>
+            
+            <div class="step-header" style="margin: 25px 0 15px 0;">Opción 2: Actualizar masivamente con PowerCLI:</div>
+            
+            <pre># Actualizar VMware Tools en todas las VMs de un cluster
+Get-Cluster "cluster-cont" | Get-VM | 
+    Where-Object {$_.ExtensionData.Guest.ToolsStatus -ne 'toolsOk'} | 
+    Update-Tools -NoReboot
+
+# Nota: Para VMs críticas, coordinar reinicio en ventana de mantenimiento</pre>
+            
+            <div class="section-divider"></div>
+            
+            <h2 id="hotadd">6. CONFIGURACIÓN HOT-ADD</h2>
+            
+            <p style="font-size: 1.1em; margin: 20px 0;">
+                Para permitir escalado de CPU y RAM <strong>sin reiniciar la VM</strong>.
+            </p>
+            
+            <h3>6.1 Habilitar CPU Hot-Add y Memory Hot-Add</h3>
+            
+            <div class="warning-box">
+                La VM debe estar <strong>apagada</strong> para habilitar hot-add por primera vez.
+            </div>
+            
+            <div class="step-box">
+                <div class="step-header">En vCenter UI:</div>
+                <ol>
+                    <li>Click derecho en VM → <strong>Edit Settings</strong></li>
+                    <li><strong>VM Options</strong> tab → <strong>Advanced</strong> → <strong>Configuration Parameters</strong></li>
+                    <li>Click "<strong>Edit Configuration...</strong>"</li>
+                    <li>Agregar (si no existen):
+                        <ul>
+                            <li><code>vcpu.hotadd = TRUE</code></li>
+                            <li><code>mem.hotadd = TRUE</code></li>
+                        </ul>
+                    </li>
+                    <li>Click "<strong>OK</strong>" → "<strong>OK</strong>"</li>
+                    <li>Encender la VM</li>
+                </ol>
+            </div>
+            
+            <div class="step-header" style="margin: 25px 0 15px 0;">Script PowerCLI para habilitar masivamente:</div>
+            
+            <pre># Define VMs de contingencia (ajustar filtro según sea necesario)
+$vms = Get-Cluster "cluster-cont" | Get-VM
+
+foreach ($vm in $vms) {
+    # Apagar VM si está encendida (COORDINAR CON EQUIPOS)
+    if ($vm.PowerState -eq "PoweredOn") {
+        Write-Host "⚠️  VM $($vm.Name) está encendida - SALTADA" -ForegroundColor Yellow
+        continue
+    }
+    
+    # Configurar hot-add
+    $vmConfigSpec = New-Object VMware.Vim.VirtualMachineConfigSpec
+    
+    $vmConfigSpec.CpuHotAddEnabled = $true
+    $vmConfigSpec.MemoryHotAddEnabled = $true
+    
+    $vm.ExtensionData.ReconfigVM($vmConfigSpec)
+    
+    Write-Host "✅ Hot-Add habilitado en: $($vm.Name)" -ForegroundColor Green
+}</pre>
+            
+            <div class="warning-box">
+                <ul>
+                    <li>VMs Linux modernas (kernel 3.x+) soportan hot-add sin problemas</li>
+                    <li>VMs Windows necesitan VMware Tools instalado y actualizado</li>
+                    <li><strong>VMs de bases de datos críticas:</strong> Evaluar impacto con DBAs antes de hacer cambios</li>
+                </ul>
+            </div>
+            
+            <h3>6.2 Validar Hot-Add configurado</h3>
+            
+            <pre># Script de validación:
+Get-VM | Select Name,
+    @{N='CPU Hot-Add';E={$_.ExtensionData.Config.CpuHotAddEnabled}},
+    @{N='Memory Hot-Add';E={$_.ExtensionData.Config.MemoryHotAddEnabled}} | 
+    Format-Table -AutoSize</pre>
+            
+            <div class="section-divider"></div>
+            
+            <h2 id="validacion">7. VALIDACIÓN FINAL</h2>
+            
+            <h3>7.1 Checklist de Configuración VMware</h3>
+            
+            <div class="checklist">
+                <div style="font-weight: bold; margin-bottom: 15px; color: #1e3a8a; font-size: 1.1em;">✅ Usuarios de servicio:</div>
+                <div class="checklist-item">svc-terraform@vsphere.local creado</div>
+                <div class="checklist-item">svc-ansible@vsphere.local creado</div>
+                
+                <div style="font-weight: bold; margin: 25px 0 15px 0; color: #1e3a8a; font-size: 1.1em;">✅ Roles personalizados:</div>
+                <div class="checklist-item">IaC-Operator creado con permisos correctos</div>
+                <div class="checklist-item">IaC-ReadOnly-Plus creado con permisos correctos</div>
+                
+                <div style="font-weight: bold; margin: 25px 0 15px 0; color: #1e3a8a; font-size: 1.1em;">✅ Permisos asignados:</div>
+                <div class="checklist-item">svc-terraform → IaC-Operator en Datacenter Contingencia (propagate)</div>
+                <div class="checklist-item">svc-ansible → IaC-ReadOnly-Plus en Datacenter Contingencia (propagate)</div>
+                
+                <div style="font-weight: bold; margin: 25px 0 15px 0; color: #1e3a8a; font-size: 1.1em;">✅ Red y conectividad:</div>
+                <div class="checklist-item">Firewall permite Jump Host → vCenter (443, 902)</div>
+                <div class="checklist-item">Firewall permite Jump Host → ESXi (443, 902)</div>
+                <div class="checklist-item">Firewall permite Jump Host → VMs (22, 5985, 5986)</div>
+                
+                <div style="font-weight: bold; margin: 25px 0 15px 0; color: #1e3a8a; font-size: 1.1em;">✅ VMware Tools:</div>
+                <div class="checklist-item">Inventario de VMs con estado de Tools completado</div>
+                <div class="checklist-item">VMs críticas con Tools actualizadas</div>
+                
+                <div style="font-weight: bold; margin: 25px 0 15px 0; color: #1e3a8a; font-size: 1.1em;">✅ Hot-Add:</div>
+                <div class="checklist-item">CPU Hot-Add habilitado en VMs objetivo</div>
+                <div class="checklist-item">Memory Hot-Add habilitado en VMs objetivo</div>
+                
+                <div style="font-weight: bold; margin: 25px 0 15px 0; color: #1e3a8a; font-size: 1.1em;">✅ Documentación:</div>
+                <div class="checklist-item">Credenciales guardadas en gestor seguro (Vault/1Password/Azure KeyVault)</div>
+                <div class="checklist-item">Diagrama de red actualizado con IPs Jump Host y vCenters</div>
+            </div>
+            
+            <h3>7.2 Prueba de Conectividad desde Jump Host</h3>
+            
+            <div class="step-header" style="margin: 25px 0 15px 0;">Script Bash de validación:</div>
+            
+            <pre>#!/bin/bash
+# test-vcenter-connectivity.sh
+
+VCENTER_CONT="vcenter-cont.dominio.local"
+VCENTER_PROD="vcenter-prod.dominio.local"
+
+echo "🔍 Validando conectividad a vCenter Contingencia..."
+curl -k -I https://$VCENTER_CONT/ui/ 2>/dev/null | head -n 1
+
+echo "🔍 Validando API vCenter..."
+curl -k -X POST https://$VCENTER_CONT/rest/com/vmware/cis/session \
+  -u "svc-terraform@vsphere.local:PASSWORD_AQUI" 2>/dev/null | jq .
+
+echo "✅ Si ves un token, la conexión es exitosa"</pre>
+            
+            <div class="step-header" style="margin: 25px 0 15px 0;">Validación con Python + pyVmomi:</div>
+            
+            <pre>#!/usr/bin/env python3
+# test-vsphere-login.py
+
+from pyVim.connect import SmartConnect
+import ssl
+
+vcenter = "vcenter-cont.dominio.local"
+username = "svc-terraform@vsphere.local"
+password = "TU_PASSWORD"
+
+context = ssl._create_unverified_context()
+
+try:
+    si = SmartConnect(host=vcenter, user=username, pwd=password, sslContext=context)
+    print(f"✅ Conectado exitosamente a {vcenter}")
+    print(f"   vCenter Version: {si.content.about.version}")
+    print(f"   API Type: {si.content.about.apiType}")
+except Exception as e:
+    print(f"❌ Error de conexión: {e}")</pre>
+            
+            <h3>7.3 Validación con Terraform</h3>
+            
+            <div class="step-box">
+                <div class="step-header">Crear archivo test-connection.tf en Jump Host:</div>
+                <pre>terraform {
+  required_providers {
+    vsphere = {
+      source  = "hashicorp/vsphere"
+      version = "~> 2.6"
+    }
+  }
+}
+
+provider "vsphere" {
+  user                 = "svc-terraform@vsphere.local"
+  password             = "TU_PASSWORD"  # Mejor usar variable de entorno
+  vsphere_server       = "vcenter-cont.dominio.local"
+  allow_unverified_ssl = true
+}
+
+data "vsphere_datacenter" "dc" {
+  name = "DATACENTER CONTINGENCIA"
+}
+
+output "datacenter_id" {
+  value = data.vsphere_datacenter.dc.id
+}</pre>
+            </div>
+            
+            <div class="command-example">
+terraform init<br>
+terraform plan<br><br>
+# Si funciona, verás:<br>
+# Plan: 0 to add, 0 to change, 0 to destroy.<br>
+# Changes to Outputs:<br>
+#   + datacenter_id = "datacenter-XXX"
+            </div>
+            
+            <h3>7.4 Validación con Ansible</h3>
+            
+            <div class="step-box">
+                <div class="step-header">Crear inventario de prueba test-inventory.yml:</div>
+                <pre>plugin: community.vmware.vmware_vm_inventory
+strict: False
+hostname: vcenter-cont.dominio.local
+username: svc-ansible@vsphere.local
+password: TU_PASSWORD
+validate_certs: False
+with_tags: False</pre>
+            </div>
+            
+            <div class="command-example">
+# Instalar collection<br>
+ansible-galaxy collection install community.vmware<br><br>
+# Probar inventario dinámico<br>
+ansible-inventory -i test-inventory.yml --graph<br><br>
+# Deberías ver:<br>
+# @all:<br>
+#   |--@ungrouped:<br>
+#   |--@&lt;cluster-name&gt;:<br>
+#   |  |--vm-name-1<br>
+#   |  |--vm-name-2
+            </div>
+            
+            <div class="section-divider"></div>
+            
+            <h2> SIGUIENTE PASO</h2>
+            
+            <div class="success-box">
+                <p style="font-size: 1.1em; line-height: 1.8;">
+                    Una vez completada esta guía, proceder con:
+                </p>
+                <ul style="margin-top: 15px; font-size: 1.05em;">
+                    <li><strong>Fase 0, Tarea 0.8:</strong> Instalar toolchain en Jump Host (Terraform, Ansible, Python)</li>
+                    <li><strong>Fase 1, Tarea 1.1:</strong> Configurar Terraform backend para state remoto</li>
+                </ul>
+            </div>
+            
+            <div class="section-divider"></div>
+            
+            <h2>📚 REFERENCIAS</h2>
+            
+            <ul style="font-size: 1.05em; line-height: 2;">
+                <li><a href="https://registry.terraform.io/providers/hashicorp/vsphere/latest/docs" target="_blank" style="color: #3b82f6;">VMware vSphere Terraform Provider</a></li>
+                <li><a href="https://docs.ansible.com/ansible/latest/collections/community/vmware/index.html" target="_blank" style="color: #3b82f6;">Ansible VMware Collection</a></li>
+                <li><a href="https://developer.vmware.com/apis/vsphere-automation/latest/" target="_blank" style="color: #3b82f6;">vSphere API Reference</a></li>
+                <li><a href="https://docs.vmware.com/en/VMware-Tools/index.html" target="_blank" style="color: #3b82f6;">VMware Tools Documentation</a></li>
+            </ul>
+            
+            <div style="text-align: center; margin: 50px 0; padding: 40px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 15px;">
+                <h3 style="color: #1e3a8a; font-size: 1.8em; margin-bottom: 15px;">✅ Guía Completa</h3>
+                <p style="font-size: 1.2em; color: #0284c7;">
+                    Ahora tienes todo lo necesario para configurar VMware y empezar con IaC
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

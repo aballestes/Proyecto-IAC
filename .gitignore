@@ -64,5 +64,13 @@ desktop.ini
 # ---- Outputs de scripts ----
 scripts/discovery/*.csv
 scripts/discovery/*.json
+scripts/discovery/*.yaml
+scripts/discovery/*.yml
 scripts/discovery/*.hcl
 scripts/discovery/import-*.sh
+scripts/discovery/inventario_*
+
+# ---- Variables de entorno ----
+.env
+.env.local
+.env.*.local

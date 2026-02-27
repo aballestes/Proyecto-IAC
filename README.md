@@ -4,6 +4,60 @@ Infraestructura como Código para dos datacenters VMware vSphere 8 con IBM Flash
 
 ---
 
+## 🐧 Ejecutar en WSL Ubuntu (Recomendado)
+
+Este proyecto está optimizado para ejecutarse en **WSL (Windows Subsystem for Linux)** con Ubuntu.
+
+### Setup Automático (⚡ Inicio Rápido)
+
+```bash
+# 1. Desde Windows, abrir WSL Ubuntu
+wsl
+
+# 2. Navegar al proyecto (desde Windows filesystem)
+cd "/mnt/c/BACKUP SEPTIEMBRE/GIFHUB/PROYECTO IAAC"
+
+# 3. Ejecutar script de setup automático
+chmod +x setup-wsl.sh
+./setup-wsl.sh
+
+# 4. Cargar variables de entorno
+source .env
+
+# 5. Ejecutar inventario de VMs
+cd scripts/discovery
+chmod +x run-inventory.sh
+./run-inventory.sh cont        # Contingencia
+./run-inventory.sh prod        # Producción
+./run-inventory.sh both        # Ambos ambientes
+```
+
+El script `setup-wsl.sh` instala automáticamente:
+- ✅ Python 3.11+ y dependencias (pyVmomi, PyYAML, etc.)
+- ✅ Terraform 1.7+
+- ✅ Ansible 2.15+ con colecciones VMware
+- ✅ Git y herramientas auxiliares
+- ✅ Configuración de variables de entorno
+
+### Ejecución Manual del Inventario
+
+```bash
+# Opción 1: Con script wrapper (más fácil)
+cd scripts/discovery
+./run-inventory.sh cont csv      # Contingencia en CSV
+./run-inventory.sh prod json     # Producción en JSON
+
+# Opción 2: Directamente con Python
+python3 vm_inventory.py \
+  --host vcenter-cont.dominio.local \
+  --user svc-ansible@vsphere.local \
+  --datacenter "DATACENTER CONTINGENCIA" \
+  --format csv \
+  --output inventario_contingencia.csv
+```
+
+---
+
 ## Arquitectura
 
 | DC | vCenter | Clusters | VMs | Storage |
@@ -69,35 +123,44 @@ PROYECTO IAAC/
 
 ## Inicio Rápido
 
-### 1. Prerrequisitos (VM de control / Jump Host)
+### Opción 1: WSL Ubuntu (⭐ RECOMENDADO - Ver sección arriba)
 ```bash
-# Terraform
-wget https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_amd64.zip
-unzip terraform_1.7.5_linux_amd64.zip && mv terraform /usr/local/bin/
+./setup-wsl.sh              # Setup automático completo
+source .env                 # Cargar variables de entorno
+cd scripts/discovery
+./run-inventory.sh cont     # Ejecutar inventario contingencia
+```
 
-# Ansible + colecciones VMware
+### Opción 2: Linux/VM Jump Host (Instalación Manual)
+```bash
+# 1. Terraform
+wget https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_amd64.zip
+unzip terraform_1.7.5_linux_amd64.zip && sudo mv terraform /usr/local/bin/
+
+# 2. Ansible + colecciones VMware
 pip3 install ansible pyVmomi
 ansible-galaxy collection install -r ansible/requirements.yml
 
-# Python para scripts de discovery
+# 3. Python para scripts de discovery
 pip3 install -r scripts/requirements.txt
-```
 
-### 2. Fase 0 — Discovery de VMs existentes
-```bash
-# Descubrir VMs de contingencia y generar archivos Terraform
+# 4. Ejecutar inventario
 python3 scripts/discovery/vm_inventory.py \
   --host vcenter-cont.dominio.local \
   --user svc-ansible@vsphere.local \
-  --password "PASSWORD" \
-  --datacenter DC-Contingencia \
-  --env contingencia \
-  --output scripts/discovery/inventario-cont
+  --datacenter "DATACENTER CONTINGENCIA" \
+  --format csv \
+  --output inventario_contingencia.csv
+```
 
-# Esto genera:
-#   inventario-cont.csv         (para revisión humana)
-#   inventario-cont.json        (datos completos)
-#   inventario-cont.tfvars.hcl  (para terraform.tfvars)
+### Opción 3: Windows (PowerShell)
+```powershell
+# Instalar PowerCLI
+Install-Module -Name VMware.PowerCLI -Scope CurrentUser -Force
+
+# Ejecutar inventario
+cd scripts\discovery
+.\Get-VMInventory.ps1 -VCenter vcenter-cont.dominio.local -Datacenter "DATACENTER CONTINGENCIA"
 #   import-contingencia.sh      (script de terraform import)
 ```
 
