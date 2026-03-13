@@ -1,0 +1,28 @@
+===================================================================
+  Tarea 0.6 — Verificacion puertos infraestructura vSphere
+  Fecha: 2026-03-13 08:56:30
+===================================================================
+
+Host                   Puerto Servicio             Estado
+-------------------------------------------------------------------
+192.168.77.152         443    vCenter-API-HTTPS    ABIERTO
+192.168.77.152         80     vCenter-API-HTTP     ABIERTO
+192.168.77.149         443    ESXi01-HTTPS-Mgmt    ABIERTO
+192.168.77.149         902    ESXi01-NFC-vMotion   ABIERTO
+192.168.77.149         22     ESXi01-SSH           ABIERTO
+192.168.77.150         443    ESXi02-HTTPS-Mgmt    ABIERTO
+192.168.77.150         902    ESXi02-NFC-vMotion   ABIERTO
+192.168.77.150         22     ESXi02-SSH           CERRADO/FILTRADO
+
+-------------------------------------------------------------------
+  RESUMEN
+  Puertos abiertos       : 7
+  Cerrados/Filtrados     : 1
+-------------------------------------------------------------------
+
+  RESULTADO: HAY PUERTOS BLOQUEADOS - REVISAR FIREWALL
+
+  Impacto por puerto bloqueado:
+    192.168.77.150:22 (ESXi02-SSH) → SSH deshabilitado en ESXi (normal por seguridad)
+
+Reporte guardado: /mnt/c/BACKUP SEPTIEMBRE/GIFHUB/PROYECTO IAAC/scripts/discovery/vsphere-ports-report-20260313-0856.txt

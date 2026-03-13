@@ -21,22 +21,23 @@ Implementar una capa de **Infraestructura como Código (IaC)** sobre dos datacen
 **Prioridad:** CRÍTICA
 
 #### Tareas:
-| # | Tarea | Responsable | Días | Dependencia |
-|---|---|---|---|---|
-| 0.1 | Acceso a ambos vCenter 8 (API / UI) con credenciales de solo lectura inicial | Admin vSphere | 1 | — |
-| 0.2 | Ejecutar script de inventario automático de VMs (Python/PowerCLI) | IaC Engineer | 1 | 0.1 |
-| 0.3 | Clasificar VMs: críticas / desarrollo / pruebas / contingencia | Arquitecto | 2 | 0.2 |
-| 0.4 | Documentar naming conventions, tags, folders, resource pools existentes | IaC Engineer | 1.5 | 0.1 |
-| 0.5 | Validar conectividad red hacia todas las VMs (ping, SSH/WinRM) | Ops | 1 | 0.1 | 0.6 | Verificar puertos: vCenter API 443, ESXi 902, SSH 22, WinRM 5985/5986 | Ops | 1 | 0.1 |
-| 0.7 | Configurar MV de control IaC (bastión/jump host) con acceso a ambos DCs | Ops | 1.5 | 0.5 |
-| 0.8 | Instalar toolchain en MV de control: Terraform, Ansible, Python, Git | IaC Engineer | 1 | 0.7 |
-| 0.9 | Configurar repositorio Git con estructura de proyecto y branching strategy | IaC Engineer | 0.5 | — |
-| 0.10 | Validar Hivecloud: confirmar que IaC no rompe enmascaramiento VLAN | Seguridad + Ops | 1.5 | 0.5 |
+| # | Tarea | Responsable | Días | Dependencia | Estado | % |
+|---|---|---|---|---|---|---|
+| 0.1 | Acceso a ambos vCenter 8 (API / UI) con credenciales de solo lectura inicial | Admin vSphere | 1 | — | ✅ Completo | 100% |
+| 0.2 | Ejecutar script de inventario automático de VMs (Python/PowerCLI) | IaC Engineer | 1 | 0.1 | ✅ Completo | 100% |
+| 0.3 | Clasificar VMs: críticas / desarrollo / pruebas / contingencia | Arquitecto | 2 | 0.2 | ✅ Completo | 100% |
+| 0.4 | Documentar naming conventions, tags, folders, resource pools existentes | IaC Engineer | 1.5 | 0.1 | 🟡 Sección tags pendiente | 60% |
+| 0.5 | Validar conectividad red hacia todas las VMs (ping, SSH/WinRM) | Ops | 1 | 0.1 | ✅ Completo | 100% |
+| 0.6 | Verificar puertos: vCenter API 443, ESXi 902, SSH 22, WinRM 5985/5986 | Ops | 1 | 0.1 | ✅ Completo | 100% |
+| 0.7 | Configurar MV de control IaC (bastión/jump host) con acceso a ambos DCs | Ops | 1.5 | 0.5 | 🟡 Diferido a Fase 2 — WSL Ubuntu local | 30% |
+| 0.8 | Instalar toolchain en MV de control: Terraform, Ansible, Python, Git | IaC Engineer | 1 | 0.7 | 🟡 Diferido a Fase 2 — operativo en WSL local | 50% |
+| 0.9 | Configurar repositorio Git con estructura de proyecto y branching strategy | IaC Engineer | 0.5 | — | ✅ Completo | 100% |
+| 0.10 | Validar Hivecloud: confirmar que IaC no rompe enmascaramiento VLAN | Seguridad + Ops | 1.5 | 0.5 | ✅ Completo | 100% |
 
 #### Entregables Fase 0:
 - [ ] Inventario completo VMs (CSV/YAML) ambos datacenters
 - [ ] Diagrama de red actualizado con VLANs y datastores
-- [ ] MV control plane operativa con toolchain instalado
+- [ ] MV control plane operativa con toolchain instalado — **DIFERIDO a Fase 2** (actualmente WSL Ubuntu local)
 - [ ] Repositorio Git inicializado con estructura IaC
 
 ---
@@ -46,16 +47,16 @@ Implementar una capa de **Infraestructura como Código (IaC)** sobre dos datacen
 **Prioridad:** ALTA — Validar sin riesgo para producción
 
 #### Tareas:
-| # | Tarea | Responsable | Días | Riesgo |
-|---|---|---|---|---|
-| 1.1 | Configurar Terraform backend (state file remoto: S3/MinIO/NFS) | IaC Engineer | 1 | BAJO |
-| 1.2 | Terraform: importar recursos existentes contingencia (terraform import) | IaC Engineer | 4 | MEDIO |
-| 1.3 | Terraform: crear módulo `vsphere-vm` parametrizable (CPU/MEM/DISK) | IaC Engineer | 2.5 | BAJO |
-| 1.4 | Terraform: crear módulo `vsphere-cluster-compute` | IaC Engineer | 1.5 | BAJO |
-| 1.5 | Ansible: inventario dinámico vSphere (plugin `community.vmware`) | IaC Engineer | 1.5 | BAJO |
-| 1.6 | Ansible: playbook `vm-health-check.yml` (ping, recursos, servicios) | IaC Engineer | 1 | BAJO |
-| 1.7 | Ansible: role `vm-scale-resources` (CPU hot-add, RAM hot-add, disk) | IaC Engineer | 2.5 | MEDIO |
-| 1.8 | Testing completo en contingencia: escalar 5-8 VMs piloto | IaC Engineer + Ops | 2 | BAJO |
+| # | Tarea | Responsable | Días | Riesgo | Estado | % |
+|---|---|---|---|---|---|---|
+| 1.1 | Configurar Terraform backend (state file remoto: S3/MinIO/NFS) | IaC Engineer | 1 | BAJO | 🟡 Local (pendiente remoto) | 30% |
+| 1.2 | Terraform: importar recursos existentes contingencia (terraform import) | IaC Engineer | 4 | MEDIO | 🟡 Pendiente terraform apply | 90% |
+| 1.3 | Terraform: crear módulo `vsphere-vm` parametrizable (CPU/MEM/DISK) | IaC Engineer | 2.5 | BAJO | ✅ Completo | 100% |
+| 1.4 | Terraform: crear módulo `vsphere-cluster-compute` | IaC Engineer | 1.5 | BAJO | ❌ Pendiente | 0% |
+| 1.5 | Ansible: inventario dinámico vSphere (plugin `community.vmware`) | IaC Engineer | 1.5 | BAJO | ❌ Pendiente | 0% |
+| 1.6 | Ansible: playbook `vm-health-check.yml` (ping, recursos, servicios) | IaC Engineer | 1 | BAJO | 🟡 Esqueleto creado | 30% |
+| 1.7 | Ansible: role `vm-scale-resources` (CPU hot-add, RAM hot-add, disk) | IaC Engineer | 2.5 | MEDIO | 🟡 Esqueleto creado | 30% |
+| 1.8 | Testing completo en contingencia: escalar 5-8 VMs piloto | IaC Engineer + Ops | 2 | BAJO | ❌ Pendiente | 0% |
 
 #### Entregables Fase 1:
 - [ ] Estado Terraform de contingencia capturado y versionado
@@ -70,15 +71,15 @@ Implementar una capa de **Infraestructura como Código (IaC)** sobre dos datacen
 **Prioridad:** ALTA — Ejecutar con ventanas de mantenimiento
 
 #### Tareas:
-| # | Tarea | Responsable | Días | Riesgo |
-|---|---|---|---|---|
-| 2.1 | Terraform: importar recursos producción cluster-app (270 VMs aprox) | IaC Engineer | 6 | ALTO — ventana |
-| 2.2 | Terraform: importar recursos producción cluster-db (30 VMs críticas) | IaC Engineer | 4 | ALTO — ventana |
-| 2.3 | Ansible: inventario dinámico producción separado por grupos (crítico/dev/test) | IaC Engineer | 2 | BAJO |
-| 2.4 | Ansible: playbooks diferenciados por tipo de VM (Linux/Windows) | IaC Engineer | 2 | BAJO |
-| 2.5 | Implementar pipeline CI/CD (GitLab/GitHub Actions) plan/apply con aprobación | DevOps | 3 | MEDIO |
-| 2.6 | Runbooks de escalado para equipo de operaciones | IaC Engineer | 1 | BAJO |
-| 2.7 | Capacitación del equipo de operaciones en uso de playbooks | IaC Lead | 2 | BAJO |
+| # | Tarea | Responsable | Días | Riesgo | Estado | % |
+|---|---|---|---|---|---|---|
+| 2.1 | Terraform: importar recursos producción cluster-app (270 VMs aprox) | IaC Engineer | 6 | ALTO — ventana | ❌ Pendiente | 0% |
+| 2.2 | Terraform: importar recursos producción cluster-db (30 VMs críticas) | IaC Engineer | 4 | ALTO — ventana | ❌ Pendiente | 0% |
+| 2.3 | Ansible: inventario dinámico producción separado por grupos (crítico/dev/test) | IaC Engineer | 2 | BAJO | ❌ Pendiente | 0% |
+| 2.4 | Ansible: playbooks diferenciados por tipo de VM (Linux/Windows) | IaC Engineer | 2 | BAJO | ❌ Pendiente | 0% |
+| 2.5 | Implementar pipeline CI/CD (GitLab/GitHub Actions) plan/apply con aprobación | DevOps | 3 | MEDIO | ❌ Pendiente | 0% |
+| 2.6 | Runbooks de escalado para equipo de operaciones | IaC Engineer | 1 | BAJO | ❌ Pendiente | 0% |
+| 2.7 | Capacitación del equipo de operaciones en uso de playbooks | IaC Lead | 2 | BAJO | ❌ Pendiente | 0% |
 
 #### Entregables Fase 2:
 - [ ] 300 VMs producción gestionadas por Terraform
@@ -93,14 +94,27 @@ Implementar una capa de **Infraestructura como Código (IaC)** sobre dos datacen
 **Prioridad:** MEDIA
 
 #### Tareas:
-| # | Tarea | Responsable | Días |
-|---|---|---|---|
-| 3.1 | Despliegue TKG Supervisor Cluster en producción (vSphere Foundation) | K8s Architect | 5 |
-| 3.2 | Namespace Kubernetes para cargas de trabajo dev/test | K8s Architect | 2 |
-| 3.3 | Ansible: playbooks de monitoreo y alertas (integración Zabbix/Prometheus) | IaC Engineer | 3 |
-| 3.4 | Automatización de snapshots y backups pre-escala | IaC Engineer | 2 |
-| 3.5 | Documentación final completa del proyecto | IaC Engineer | 2 |
-| 3.6 | Capacitación avanzada y transferencia de conocimiento | IaC Lead | 1 |
+| # | Tarea | Responsable | Días | Estado | % |
+|---|---|---|---|---|---|
+| 3.1 | Despliegue TKG Supervisor Cluster en producción (vSphere Foundation) | K8s Architect | 5 | ❌ Pendiente | 0% |
+| 3.2 | Namespace Kubernetes para cargas de trabajo dev/test | K8s Architect | 2 | ❌ Pendiente | 0% |
+| 3.3 | Ansible: playbooks de monitoreo y alertas (integración Zabbix/Prometheus) | IaC Engineer | 3 | ❌ Pendiente | 0% |
+| 3.4 | Automatización de snapshots y backups pre-escala | IaC Engineer | 2 | ❌ Pendiente | 0% |
+| 3.5 | Documentación final completa del proyecto | IaC Engineer | 2 | ❌ Pendiente | 0% |
+| 3.6 | Capacitación avanzada y transferencia de conocimiento | IaC Lead | 1 | ❌ Pendiente | 0% |
+
+---
+
+### RESUMEN DE AVANCE
+> 🗓️ Última actualización: **Jueves 13 Marzo 2026** — Se actualiza cada jueves o bajo solicitud expresa.
+
+| Fase | Tareas | ✅ Completas | 🟡 Parciales | ❌ Pendientes | % Fase | Peso | Aporte Global |
+|------|--------|-------------|-------------|--------------|--------|------|---------------|
+| Fase 0 | 10 | 7 | 3 (0.4/0.7/0.8) | 0 | **85%** | 20% | **17%** |
+| Fase 1 | 8 | 1 | 4 (1.1/1.2/1.6/1.7) | 3 | **35%** | 30% | **11%** |
+| Fase 2 | 7 | 0 | 0 | 7 | **0%** | 35% | **0%** |
+| Fase 3 | 6 | 0 | 0 | 6 | **0%** | 15% | **0%** |
+| **TOTAL** | **31** | **8** | **7** | **16** | | | **~28%** |
 
 ---
 
@@ -115,7 +129,7 @@ FASE 3:                                              [===============]
 ```
 
 **Hitos principales:**
-- **Semana 2:** Infraestructura de control lista
+- **Semana 2:** Infraestructura de control lista — **DIFERIDO a Fase 2** (usando WSL Ubuntu local hasta migración a producción)
 - **Semana 5:** Contingencia bajo IaC
 - **Semana 9:** Producción bajo IaC
 - **Semana 12:** Proyecto completo + TKG operativo
@@ -187,15 +201,16 @@ FASE 3:                                              [===============]
 
 ## 6. PRERREQUISITOS TÉCNICOS
 
-### 6.1 Software a instalar en MV Control (Jump Host)
+### 6.1 Software en entorno de control IaC
+> **Estado actual:** Toolchain ejecutándose en **WSL Ubuntu en estación de trabajo local** (temporal). Se migrará a **MV VMware dedicada** al iniciar Fase 2 (paso a producción).
 ```
-- Terraform >= 1.7.x
-- Terraform Provider: hashicorp/vsphere >= 2.6.x
-- Ansible >= 2.15 (ansible-core)
-- Python >= 3.11
-- pyVmomi >= 8.0 (VMware Python SDK)
-- community.vmware Ansible collection >= 4.x
-- Git >= 2.40
+- Terraform >= 1.7.x  ✅ operativo en WSL
+- Terraform Provider: hashicorp/vsphere >= 2.6.x  ✅ operativo
+- Ansible >= 2.15 (ansible-core)  (pendiente validación)
+- Python >= 3.11  ✅ operativo en WSL
+- pyVmomi >= 8.0 (VMware Python SDK)  (pendiente validación)
+- community.vmware Ansible collection >= 4.x  (pendiente validación)
+- Git >= 2.40  ✅ operativo
 - PowerCLI (opcional, para scripts de inventario)
 - jq, yq (helpers CLI)
 ```

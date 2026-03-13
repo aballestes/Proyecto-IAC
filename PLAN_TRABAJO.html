@@ -386,15 +386,15 @@ Implementar una capa de **Infraestructura como Código (IaC)** sobre dos datacen
 | 0.4 | Documentar naming conventions, tags, folders, resource pools existentes | IaC Engineer | 1.5 | 0.1 |
 | 0.5 | Validar conectividad red hacia todas las VMs (ping, SSH/WinRM) | Ops | 1 | 0.1 |
 | 0.6 | Verificar puertos: vCenter API 443, ESXi 902, SSH 22, WinRM 5985/5986 | Ops | 1 | 0.1 |
-| 0.7 | Configurar MV de control IaC (bastión/jump host) con acceso a ambos DCs | Ops | 1.5 | 0.5 |
-| 0.8 | Instalar toolchain en MV de control: Terraform, Ansible, Python, Git | IaC Engineer | 1 | 0.7 |
+| 0.7 | Configurar MV de control IaC (bastión/jump host) con acceso a ambos DCs | Ops | 1.5 | 0.5 | 🟡 **DIFERIDO** — Actualmente se usa WSL Ubuntu en estación local. Se migrará a MV VMware al pasar a producción (Fase 2). |
+| 0.8 | Instalar toolchain en MV de control: Terraform, Ansible, Python, Git | IaC Engineer | 1 | 0.7 | 🟡 **DIFERIDO** — Toolchain ya operativo en WSL local. Se instalará en MV VMware junto con 0.7. |
 | 0.9 | Configurar repositorio Git con estructura de proyecto y branching strategy | IaC Engineer | 0.5 | — |
 | 0.10 | Validar Hivecloud: confirmar que IaC no rompe enmascaramiento VLAN | Seguridad + Ops | 1.5 | 0.5 |
 
 #### Entregables Fase 0:
 - [ ] Inventario completo VMs (CSV/YAML) ambos datacenters
 - [ ] Diagrama de red actualizado con VLANs y datastores
-- [ ] MV control plane operativa con toolchain instalado
+- [ ] MV control plane operativa con toolchain instalado — **DIFERIDO a Fase 2** (actualmente WSL Ubuntu local)
 - [ ] Repositorio Git inicializado con estructura IaC
 
 ---
@@ -549,15 +549,16 @@ FASE 3:                                              [===============]
 
 ## 6. PRERREQUISITOS TÉCNICOS
 
-### 6.1 Software a instalar en MV Control (Jump Host)
+### 6.1 Software en entorno de control IaC
+> **Estado actual:** Toolchain ejecutándose en **WSL Ubuntu en estación de trabajo local** (temporal). Se migrará a **MV VMware dedicada** al iniciar Fase 2 (paso a producción).
 \`\`\`
-- Terraform >= 1.7.x
-- Terraform Provider: hashicorp/vsphere >= 2.6.x
-- Ansible >= 2.15 (ansible-core)
-- Python >= 3.11
-- pyVmomi >= 8.0 (VMware Python SDK)
-- community.vmware Ansible collection >= 4.x
-- Git >= 2.40
+- Terraform >= 1.7.x  ✅ operativo en WSL
+- Terraform Provider: hashicorp/vsphere >= 2.6.x  ✅ operativo
+- Ansible >= 2.15 (ansible-core)  (pendiente validación)
+- Python >= 3.11  ✅ operativo en WSL
+- pyVmomi >= 8.0 (VMware Python SDK)  (pendiente validación)
+- community.vmware Ansible collection >= 4.x  (pendiente validación)
+- Git >= 2.40  ✅ operativo
 - PowerCLI (opcional, para scripts de inventario)
 - jq, yq (helpers CLI)
 \`\`\`

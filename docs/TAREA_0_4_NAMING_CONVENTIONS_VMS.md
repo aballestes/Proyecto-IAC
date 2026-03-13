@@ -1,8 +1,8 @@
 # Tarea 0.4 – Naming Conventions y Organización de VMs
 
-Este documento sirve como **plantilla** para documentar la situación actual de las VMs en vSphere (estado AS-IS) y la propuesta de estandarización (TO-BE).
-
-Fuente principal de datos: archivos CSV generados por el inventario automático (por ejemplo `inventario_datacenter_contingencia.csv` y `inventario_produccion.csv`).
+**Fecha:** 2026-03-13  
+**Fuente:** `inventario_datacenter_contingencia.csv` — 27 VMs datacenter contingencia  
+**Responsable:** Alex Ballesteros
 
 ---
 
@@ -10,102 +10,91 @@ Fuente principal de datos: archivos CSV generados por el inventario automático 
 
 ### 1.1. Patrones de nombres observados
 
-- Ejemplos de nombres típicos de VMs:
-  - `...`
-  - `...`
-- Prefijos identificados (por ambiente, rol, etc.):
-  - `PRD-`, `PROD-`, `DEV-`, `QA-`, `TST-`, etc.
-- Sufijos o códigos usados (cliente, aplicación, región, etc.):
-  - `-DB`, `-APP`, `-WEB`, `-PREP`, `-MRP`, etc.
+Análisis del inventario real del datacenter de contingencia:
 
-> **Cómo llenarlo:** filtrar en la columna `VM Name` y listar aquí los patrones repetidos que encuentres.
+| Patrón | Ejemplos | Significado inferido |
+|--------|---------|---------------------|
+| `NGINX*` | `NGINXPRXLIBPRD2PREP`, `NGINXATALLAPREP` | NGINX + función + ambiente |
+| `NGIPRUP*` | `NGIPRUP01MRPREP`, `NGIPRUP02MRPREP` | NGI + Proxy + Rupay + secuencia |
+| `POSTIBD*` | `POSTIBDREALPREP`, `POSTIBDOFFPREP`, `POSTIBDNIXPREP` | PostiLion + BD + tipo |
+| `POSTIAPP*` | `POSTIAPPREP` | PostiLion + App |
+| `SG_v*` | `SG_vDSM_0_21`, `SG_vSCM_0_1` | Hivecloud Security Group + tipo + secuencia |
+| `*C` (sufijo C) | `ADC`, `ADCONNETC`, `VAULTC`, `PSMC`, `PVWAC`, `VCSAC` | Sufijo `C` = Contingencia |
+| `*PREP` (sufijo) | `NGINXATALLAPREP`, `VROPSPREP` | `PREP` = entorno de preparación/contingencia |
+| `*MRP` | `NGIPRUP01MRPREP` | `MR` = posiblemente "Maestro Rupay" |
 
 ### 1.2. Problemas detectados
 
-- VMs de producción sin prefijo claro de ambiente.
-- Mezcla de idiomas / abreviaturas incoherentes.
-- Nombres muy largos o poco descriptivos.
-- Otras observaciones:
-  - `...`
+- **Sin prefijo de ambiente consistente** — el ambiente (contingencia/producción) se indica con sufijos (`C`, `PREP`) o no se indica.
+- **Abreviaciones no documentadas** — `MR`, `SVB`, `NEG`, `INFO` en portgroups no tienen diccionario oficial.
+- **Sin separador estándar** — algunos nombres usan `_` (`SG_vDSM_0_21`), otros no usan separador (`POSTIBDREALPREP`).
+- **Longitudes inconsistentes** — desde 3 caracteres (`ADC`, `LT`) hasta 20+ (`NGINXPRXLIBPRD2PREP`).
+- **Secuencias no normalizadas** — `01`, `1`, `_0_21` mezclados.
 
 ---
 
 ## 2. Propuesta de Naming Convention (TO-BE)
 
-Definir cómo deberían llamarse las VMs nuevas y, a futuro, cómo renombrar las existentes cuando sea posible.
+> **Nota:** Las VMs existentes **no se renombran** — el renombrado rompe referencias en vCenter, AD y monitoreo. Esta convención aplica **solo a VMs nuevas** creadas con Terraform.
 
-### 2.1. Formato recomendado de nombre
-
-Ejemplo de estructura general:
+### 2.1. Formato estándar para VMs nuevas
 
 ```text
-<Ambiente>-<Aplicacion>-<Rol>-<Secuencia>
+<AMB><APP><ROL><SEQ>
 ```
 
-Donde:
+| Campo | Valores | Max chars |
+|-------|---------|----------|
+| `AMB` | `CONT` (contingencia), `PRD` (producción) | 4 |
+| `APP` | Código de aplicación: `NGINX`, `POSTI`, `AD`, `VAULT`, `EX` | 4-6 |
+| `ROL` | `APP`, `DB`, `PRX`, `WEB`, `MGR` | 3 |
+| `SEQ` | `01`, `02`… | 2 |
 
-- `Ambiente`: `PRD`, `PRE`, `DEV`, `QA`, `LAB`, `CONT`.
-- `Aplicacion`: código corto de la aplicación/sistema (máx. 8–10 caracteres).
-- `Rol`: `APP`, `WEB`, `DB`, `RPT`, `JOB`, etc.
-- `Secuencia`: `01`, `02`, `03`…
+**Ejemplos:**
+```
+CONTNGINXPRX01   ← Contingencia, NGINX, Proxy, 01
+CONTPOSTIDB01    ← Contingencia, PostiLion, DB, 01
+PRDNGINXPRX01    ← Producción, NGINX, Proxy, 01
+```
 
-> Ajustar este formato a la realidad del banco (puedes proponer otro si ya existe un estándar interno).
+### 2.2. Reglas
 
-### 2.2. Ejemplos
-
-- Contingencia
-  - `CONT-CELTA-DB-01`
-  - `CONT-CELTA-APP-02`
-- Producción
-  - `PRD-CELTA-WEB-01`
-  - `PRD-CELTA-BATCH-01`
-
-### 2.3. Reglas específicas
-
-- Longitud máxima recomendada: `N` caracteres.
-- Caracteres permitidos: letras mayúsculas, números y guiones (`A-Z`, `0-9`, `-`).
-- No usar espacios ni caracteres especiales (`_`, `/`, `.` etc.).
-- Reservar prefijos especiales (por ejemplo, `MGMT-` para infraestructura interna).
+- Solo mayúsculas, sin separadores para mantener compatibilidad con nombres actuales
+- Longitud máxima: **20 caracteres**
+- VMs de infraestructura (vCenter, Hivecloud) conservan su nombre de sistema (`VCSAC`, `SG_v*`)
 
 ---
 
 ## 3. Carpetas (Folders) y Resource Pools
 
-### 3.1. Estructura actual de carpetas
+### 3.1. Estructura actual de carpetas — Contingencia
 
-Usar la columna `Folder` del inventario para describir cómo están organizadas hoy las VMs.
+| Folder observado | VMs | Uso |
+|-----------------|-----|-----|
+| `POOL` | Mayoría de VMs | Pool general — sin clasificación |
+| `POSTILIONDES` | `POSTIAP*`, `POSTIBD*` | Grupo PostiLion |
+| `REPLIC` | `NGINXPRXLIBPRD2PREP` | Replicación |
+| `EXC` | `EX3` | Exchange |
+| `VCENTERC8` | `VCSAC`, `VROPSPREP` | Infraestructura vCenter |
+| `esx7appc` | `SG_vSSM_0_19` | ESXi App cluster |
 
-- Ejemplos de rutas de folder:
-  - `CELTA/PRODUCCION/APP`
-  - `CELTA/CONTINGENCIA/DB`
-  - `...`
-- Observaciones:
-  - Carpetas mezclan ambientes (desarrollo + producción).
-  - VMs críticas en carpetas genéricas (`Misc`, `SinClasificar`, etc.).
+**Problema principal:** La mayoría de VMs están en `POOL` sin clasificación por criticidad o aplicación.
 
-### 3.2. Propuesta de estructura estándar
+### 3.2. Propuesta de estructura de carpetas TO-BE
 
-Definir una estructura objetivo más clara, por ejemplo:
-
-```text
-<Capa>/<Ambiente>/<Aplicacion>/<Rol>
+```
+Datacenter-Contingencia/
+├── CRITICA/          ← VMs core bancarias (PostiLion, AD, Vault)
+├── APLICACIONES/     ← Proxies NGINX, AWP, SAGS
+├── INFRAESTRUCTURA/  ← vCenter, vROPS, Hivecloud (no gestionar con Terraform)
+└── SISTEMA/          ← vCLS, reserved
 ```
 
-Ejemplo:
+### 3.3. Resource Pools actuales
 
-- `CELTA/PRODUCCION/CELTA/APP`
-- `CELTA/PRODUCCION/CELTA/DB`
-- `CELTA/CONTINGENCIA/CELTA/APP`
-
-> Adaptar según la organización real (puede ser por cliente, país, línea de negocio, etc.).
-
-### 3.3. Resource Pools
-
-Si se usan Resource Pools, documentar aquí:
-
-- Resource Pools existentes y su propósito.
-- Reglas actuales de asignación (qué entra en cada pool).
-- Problemas detectados (pools sin uso, VMs en el root, etc.).
+| Resource Pool | ID (tfstate) | VMs asignadas |
+|--------------|-------------|--------------|
+| `AppIBM` | resgroup-8542 | Todas las VMs del tfvars |
 
 ---
 
@@ -138,17 +127,21 @@ Definir qué tags deberían ser obligatorios para cada VM nueva:
 
 ## 5. Gaps y Recomendaciones
 
-- Resumen de principales desviaciones detectadas entre AS-IS y TO-BE.
-- Riesgos asociados (por ejemplo, difícil identificar qué VMs son críticas en incidentes).
-- Quick wins sugeridos para Fase 1:
-  - Normalizar nombres de VMs nuevas según el estándar.
-  - Empezar a aplicar tags mínimos en todas las VMs nuevas.
-  - Reorganizar carpetas para **un** datacenter piloto (por ejemplo, Contingencia).
+| Gap | Riesgo | Acción recomendada |
+|-----|--------|-------------------|
+| Nombres no estandarizados en VMs existentes | Difícil identificar rol/ambiente en incidentes | Aplicar naming solo a VMs nuevas |
+| Todas las VMs en folder `POOL` | Sin priorización en incidentes | Crear folders por criticidad en Fase 1 |
+| Sin tags en ninguna VM | Reportes y filtros imposibles | Aplicar tags via Terraform en primer `apply` |
+| `NGINXATALLAPREP` apagada sin documentar | Riesgo de eliminarla por error | Documentar stand-by intencional |
 
 ---
 
 ## 6. Aprobaciones / Decisiones
 
-- Fecha de validación de este estándar.
-- Áreas que lo aprueban (Infraestructura, Seguridad, Arquitectura, etc.).
-- Observaciones finales.
+| Campo | Valor |
+|-------|-------|
+| Fecha elaboración | 2026-03-13 |
+| Elaborado por | Alex Ballesteros |
+| Pendiente aprobación | Infraestructura, Seguridad Informática |
+| Aplica a | Datacenter Contingencia (fase inicial) |
+| Próxima revisión | Antes de terraform apply en producción |
