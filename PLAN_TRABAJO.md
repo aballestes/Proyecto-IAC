@@ -1,6 +1,6 @@
 # PLAN DE TRABAJO — INFRAESTRUCTURA COMO CÓDIGO (IaC)
 ## VMware vSphere + Terraform + Ansible
-**Fecha de inicio:** Febrero 2026  
+**Fecha de inicio de implementación:** 2 de Marzo 2026  
 **Clasificación:** TÉCNICO — CONFIDENCIAL INTERNO
 
 ---
