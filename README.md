@@ -280,6 +280,58 @@ ansible-playbook playbooks/scale-resources.yml \
 
 ---
 
+## Repositorio Git — Branching Strategy
+
+### Ramas
+
+| Rama | Propósito | Merge hacia |
+|------|-----------|-------------|
+| `main` | Código aprobado y estable — equivale a producción | — |
+| `develop` | Integración de trabajo en curso | `main` (vía PR) |
+| `feature/tarea-X.X-descripcion` | Desarrollo de cada tarea del plan | `develop` |
+| `hotfix/descripcion` | Correcciones urgentes sobre `main` | `main` + `develop` |
+
+### Flujo de trabajo
+
+```
+feature/tarea-1.1-xxx  ──┐
+feature/tarea-1.2-xxx  ──┤──► develop ──── PR ──► main
+feature/tarea-1.3-xxx  ──┘
+```
+
+1. Crear rama `feature/tarea-X.X-descripcion` desde `develop`
+2. Desarrollar y hacer commits en la feature branch
+3. Abrir Pull Request hacia `develop`
+4. Revisar y mergear a `develop`
+5. Cuando el sprint/fase está completo → PR de `develop` a `main`
+
+### Convención de commits
+
+```
+feat:     nueva funcionalidad o script
+fix:      corrección de bug
+docs:     cambios solo en documentación
+refactor: reorganización de código sin cambio de comportamiento
+chore:    cambios en .gitignore, dependencias, configuración
+```
+
+**Ejemplos:**
+```
+feat: tarea 0.5 test-vm-connectivity.sh (27 VMs probadas)
+fix: corregir contador bash con set -e en test-vm-connectivity
+docs: agregar naming conventions VMs contingencia
+chore: agregar *.backup a .gitignore
+```
+
+### Archivos nunca commiteados (.gitignore)
+
+- `terraform.tfvars` — credenciales vCenter
+- `*.tfstate` / `*.backup` — estado de Terraform (contiene IPs y datos sensibles)
+- `inventario_datacenter_*.csv/json` — inventario con IPs del datacenter
+- `*.pem` / `*.key` — claves SSH
+
+---
+
 ## Licencias
 - Terraform: Mozilla Public License 2.0
 - Ansible: GNU General Public License v3.0
