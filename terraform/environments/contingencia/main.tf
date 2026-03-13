@@ -12,7 +12,7 @@ terraform {
   required_providers {
     vsphere = {
       source  = "hashicorp/vsphere"
-      version = ">= 2.6.0"
+      version = "2.11.0"
     }
   }
 }
@@ -75,8 +75,8 @@ module "vms_contingencia" {
   datastore_name = lookup(each.value, "datastore", var.datastore_names[0])
 
   # Identidad
-  vm_name = each.key
-  folder  = lookup(each.value, "folder", var.default_folder)
+  vm_name   = each.key
+  vm_folder = lookup(each.value, "folder", var.default_folder)
 
   # Compute — ESCALABLE vía variables
   num_cpus             = lookup(each.value, "num_cpus", 2)
@@ -91,12 +91,11 @@ module "vms_contingencia" {
   network_interfaces = lookup(each.value, "networks", [var.portgroup_names[0]])
 
   # Almacenamiento
-  os_disk_size_gb  = lookup(each.value, "os_disk_gb", 60)
-  thin_provisioned = lookup(each.value, "thin", true)
-  data_disks       = lookup(each.value, "data_disks", [])
-
-  # Seguridad: en contingencia permitir destroy controlado
-  prevent_destroy = false
+  os_disk_size_gb       = lookup(each.value, "os_disk_gb", 60)
+  thin_provisioned      = lookup(each.value, "thin", true)
+  data_disks            = lookup(each.value, "data_disks", [])
+  scsi_controller_count = lookup(each.value, "scsi_controller_count", 1)
+  scsi_type             = lookup(each.value, "scsi_type", "lsilogic-sas")
 
   # Tags
   vm_tags = lookup(each.value, "tags", [])

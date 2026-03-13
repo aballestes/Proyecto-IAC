@@ -1,40 +1,99 @@
 #!/bin/bash
 #
-# run-inventory.sh — Wrapper para ejecutar inventario de VMs
-# ===========================================================
-# Simplifica la ejecución del script de inventario Python
+# run-inventory.sh — Ejecutar inventario de VMs para contingencia, producción o ambos
+# ===================================================================================
+# Script wrapper simplificado. Para uso interactivo desde WSL Ubuntu.
 #
 # Uso:
-#   ./run-inventory.sh cont          # Inventario de Contingencia
-#   ./run-inventory.sh prod          # Inventario de Producción
-#   ./run-inventory.sh both          # Ambos ambientes
-#   ./run-inventory.sh cont csv      # Formato específico
+#   ./run-inventory.sh {cont|prod|both} [formato]
+#
+# Ejemplos:
+#   ./run-inventory.sh cont              # Inventario de contingencia en todos los formatos
+#   ./run-inventory.sh prod csv          # Inventario de producción solo CSV
+#   ./run-inventory.sh both              # Ambos ambientes
+#
+# Para evitar ingresar la contraseña dos veces al usar 'both':
+#   VCENTER_PASSWORD="mipass" ./run-inventory.sh both
 #
 
 set -euo pipefail
 
-# Colores
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
+ok()   { echo -e "${GREEN}[✓]${NC} $*"; }
+err()  { echo -e "${RED}[✗]${NC} $*" >&2; exit 1; }
+info() { echo -e "${CYAN}[INFO]${NC} $*"; }
 
-# Funciones
-print_success() { echo -e "${GREEN}[✓]${NC} $1"; }
-print_error() { echo -e "${RED}[✗]${NC} $1"; }
-print_info() { echo -e "${CYAN}[INFO]${NC} $1"; }
-print_warning() { echo -e "${YELLOW}[!]${NC} $1"; }
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INVENTORY_SH="${SCRIPT_DIR}/get-vm-inventory.sh"
 
-banner() {
-    echo -e "${CYAN}"
-    cat << "EOF"
-╔═══════════════════════════════════════════════════════╗
-║   Inventario Automático de VMs - VMware vSphere      ║
-╚═══════════════════════════════════════════════════════╝
-EOF
-    echo -e "${NC}"
+[[ ! -f "$INVENTORY_SH" ]] && err "No se encontró get-vm-inventory.sh en $SCRIPT_DIR"
+
+# ─── Cargar solo variables de vCenter desde .env ─────────────────────────────
+ENV_FILE="$(cd "$SCRIPT_DIR/../.." && pwd)/.env"
+if [[ -f "$ENV_FILE" ]]; then
+    source <(grep -E '^export VCENTER_' "$ENV_FILE") 2>/dev/null || true
+fi
+
+# ─── Config de ambientes ─────────────────────────────────────────────────────
+CONT_HOST="${VCENTER_CONT_HOST:-vcenter-cont.dominio.local}"
+CONT_USER="${VCENTER_CONT_USER:-svc-ansible@vsphere.local}"
+CONT_DC="${VCENTER_CONT_DATACENTER:-DATACENTER CONTINGENCIA}"
+
+PROD_HOST="${VCENTER_PROD_HOST:-vcenter-prod.dominio.local}"
+PROD_USER="${VCENTER_PROD_USER:-svc-ansible@vsphere.local}"
+PROD_DC="${VCENTER_PROD_DATACENTER:-DATACENTER PRODUCCION}"
+
+# ─── Argumentos ──────────────────────────────────────────────────────────────
+if [[ $# -lt 1 ]]; then
+    echo "Uso: $0 {cont|prod|both} [csv|json|hcl|all]"
+    echo ""
+    echo "Ejemplos:"
+    echo "  $0 cont              → Contingencia (todos los formatos)"
+    echo "  $0 prod csv          → Producción solo CSV"
+    echo "  $0 both              → Ambos ambientes"
+    exit 1
+fi
+
+AMBIENTE="$1"
+FORMATO="${2:-all}"
+
+# ─── Ejecutar ────────────────────────────────────────────────────────────────
+run() {
+    local amb_desc="$1" host="$2" user="$3" dc="$4" env_name="$5"
+    info "Iniciando inventario: $amb_desc"
+    bash "$INVENTORY_SH" \
+        --host       "$host" \
+        --user       "$user" \
+        --datacenter "$dc" \
+        --format     "$FORMATO" \
+        --env        "$env_name"
+    ok "Inventario $amb_desc completado"
 }
+
+case "$AMBIENTE" in
+    cont|contingencia)
+        run "CONTINGENCIA" "$CONT_HOST" "$CONT_USER" "$CONT_DC" "contingencia"
+        ;;
+    prod|produccion)
+        run "PRODUCCION" "$PROD_HOST" "$PROD_USER" "$PROD_DC" "produccion"
+        ;;
+    both|all|ambos)
+        if [[ -z "${VCENTER_PASSWORD:-}" ]]; then
+            read -s -p "Password vCenter (se usará para ambos ambientes): " VCENTER_PASSWORD
+            export VCENTER_PASSWORD
+            echo ""
+        fi
+        run "CONTINGENCIA" "$CONT_HOST" "$CONT_USER" "$CONT_DC" "contingencia"
+        echo ""
+        echo "──────────────────────────────────────────────"
+        echo ""
+        run "PRODUCCION" "$PROD_HOST" "$PROD_USER" "$PROD_DC" "produccion"
+        ;;
+    *)
+        err "Ambiente no reconocido: $AMBIENTE. Opciones: cont, prod, both"
+        ;;
+esac
+
 
 # Usar el script desde donde se ejecuta
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

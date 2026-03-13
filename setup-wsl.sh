@@ -140,15 +140,26 @@ fi
 # ==============================================================================
 print_header "4. Instalando dependencias Python"
 
+# Crear/usar entorno virtual local para evitar restricciones de Python 3.12
+if [ ! -d ".venv" ]; then
+    print_info "Creando entorno virtual .venv para dependencias Python..."
+    python3 -m venv .venv
+    print_success "Entorno virtual .venv creado"
+fi
+
+# Activar entorno virtual
+print_info "Activando entorno virtual .venv..."
+source .venv/bin/activate
+
 if [ -f "scripts/requirements.txt" ]; then
-    print_info "Instalando desde scripts/requirements.txt..."
-    pip3 install --user -r scripts/requirements.txt
-    print_success "Dependencias Python instaladas"
+    print_info "Instalando desde scripts/requirements.txt dentro de .venv..."
+    python3 -m pip install -r scripts/requirements.txt
+    print_success "Dependencias Python instaladas en .venv"
 else
     print_warning "Archivo scripts/requirements.txt no encontrado"
-    print_info "Instalando dependencias manualmente..."
-    pip3 install --user pyVmomi>=8.0.3 PyYAML>=6.0 tabulate>=0.9.0 requests>=2.31.0 colorama>=0.4.6 Jinja2>=3.1.0
-    print_success "Dependencias instaladas manualmente"
+    print_info "Instalando dependencias manualmente en .venv..."
+    python3 -m pip install pyVmomi>=8.0.3 PyYAML>=6.0 tabulate>=0.9.0 requests>=2.31.0 colorama>=0.4.6 Jinja2>=3.1.0
+    print_success "Dependencias instaladas manualmente en .venv"
 fi
 
 # ==============================================================================

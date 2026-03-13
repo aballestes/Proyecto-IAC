@@ -172,6 +172,22 @@ variable "data_disks" {
   default = []
 }
 
+variable "scsi_controller_count" {
+  description = "Número de controladores SCSI. Con 1 controlador máximo 13 discos de datos. Aumentar a 2 para VMs con 14+ discos de datos."
+  type        = number
+  default     = 1
+  validation {
+    condition     = var.scsi_controller_count >= 1 && var.scsi_controller_count <= 4
+    error_message = "scsi_controller_count debe estar entre 1 y 4."
+  }
+}
+
+variable "scsi_type" {
+  description = "Tipo de controlador SCSI: lsilogic-sas, pvscsi, lsilogic, buslogic"
+  type        = string
+  default     = "lsilogic-sas"
+}
+
 #---- Templates / Clonación ----
 variable "template_uuid" {
   description = "UUID del template para clonar. Dejar vacío para import de VM existente"

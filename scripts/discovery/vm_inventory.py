@@ -28,6 +28,7 @@ import json
 import csv
 import ssl
 import sys
+import getpass
 import yaml
 from datetime import datetime
 from typing import Dict, List, Any
@@ -75,6 +76,9 @@ def get_all_vms(si, datacenter_name: str = None) -> List[Dict]:
     content = si.RetrieveContent()
     vms_data = []
 
+    # Construir mapa de portgroups una sola vez (eficiente)
+    pg_map = build_portgroup_map(si)
+
     # Obtener todas las VMs via container view (más eficiente que traversal)
     container = content.viewManager.CreateContainerView(
         content.rootFolder,
@@ -96,7 +100,7 @@ def get_all_vms(si, datacenter_name: str = None) -> List[Dict]:
                 if dc and dc.name != datacenter_name:
                     continue
 
-            vm_info = extract_vm_info(vm)
+            vm_info = extract_vm_info(vm, pg_map)
             if vm_info:
                 vms_data.append(vm_info)
 
@@ -119,7 +123,43 @@ def get_vm_datacenter(vm) -> Any:
     return obj
 
 
-def extract_vm_info(vm) -> Dict:
+def build_portgroup_map(si) -> Dict[str, str]:
+    """
+    Construye un mapa {portgroupKey → nombre} consultando todos los
+    dvPortgroups del vCenter. Resuelve IDs como 'dvportgroup-9552'
+    al nombre real como 'PG-APP-CONT-VLAN100'.
+    """
+    content = si.RetrieveContent()
+    pg_map = {}
+    container = content.viewManager.CreateContainerView(
+        content.rootFolder,
+        [vim.dvs.DistributedVirtualPortgroup],
+        True
+    )
+    for pg in container.view:
+        try:
+            pg_map[pg.key] = pg.name
+        except Exception:
+            continue
+    container.Destroy()
+    # También incluir portgroups de vSS (standard switch) por nombre de red
+    container2 = content.viewManager.CreateContainerView(
+        content.rootFolder,
+        [vim.Network],
+        True
+    )
+    for net in container2.view:
+        try:
+            if not isinstance(net, vim.dvs.DistributedVirtualPortgroup):
+                pg_map[net.name] = net.name
+        except Exception:
+            continue
+    container2.Destroy()
+    print(f"✓ Portgroups mapeados: {len(pg_map)}")
+    return pg_map
+
+
+def extract_vm_info(vm, pg_map: Dict[str, str] = None) -> Dict:
     """Extrae configuración relevante de una VM."""
     try:
         config = vm.config
@@ -147,17 +187,20 @@ def extract_vm_info(vm) -> Dict:
         if config.datastoreUrl:
             datastore_name = config.datastoreUrl[0].name if config.datastoreUrl else ""
 
-        # Obtener portgroups de red
+        # Obtener portgroups de red (resolviendo IDs a nombres reales)
         networks = []
         for nic in hardware.device:
             if isinstance(nic, vim.vm.device.VirtualEthernetCard):
                 if hasattr(nic.backing, 'port'):
-                    # vDS portgroup
-                    networks.append(nic.backing.port.portgroupKey)
+                    # vDS portgroup — resolver key → nombre
+                    pg_key = nic.backing.port.portgroupKey
+                    pg_name = (pg_map or {}).get(pg_key, pg_key)
+                    networks.append(pg_name)
                 elif hasattr(nic.backing, 'deviceName'):
                     networks.append(nic.backing.deviceName)
-                elif hasattr(nic.backing, 'network'):
-                    networks.append(str(nic.backing.network))
+                elif hasattr(nic.backing, 'network') and nic.backing.network:
+                    net_name = getattr(nic.backing.network, 'name', str(nic.backing.network))
+                    networks.append(net_name)
 
         # Obtener discos
         disks = []
@@ -225,7 +268,7 @@ def export_json(vms: List[Dict], output_file: str):
 def export_csv(vms: List[Dict], output_file: str):
     """Exporta a CSV para revisión humana."""
     if not vms:
-        return s
+        return
     fields = ["name", "guest_id", "guest_full", "num_cpus", "memory_mb",
               "power_state", "ip_address", "folder", "cluster", "datastore",
               "tools_status", "firmware", "annotation"]
@@ -354,7 +397,10 @@ def generate_import_script(vms: List[Dict], datacenter: str, env: str, output_fi
         f.write("\n".join(lines))
 
     import os
-    os.chmod(output_file, 0o755)
+    try:
+        os.chmod(output_file, 0o755)
+    except PermissionError:
+        print(f"⚠ No se pudo marcar como ejecutable el script {output_file}. Ejecutar con 'bash {output_file}' o ajustar permisos manualmente si es necesario.")
     print(f"✓ Script de importación generado: {output_file}")
 
 
@@ -367,13 +413,17 @@ def main():
     )
     parser.add_argument("--host",       required=True, help="FQDN o IP del vCenter")
     parser.add_argument("--user",       required=True, help="Usuario vCenter")
-    parser.add_argument("--password",   required=True, help="Password vCenter")
+    parser.add_argument("--password",   default=None,  help="Password vCenter (si se omite, se solicita de forma segura)")
     parser.add_argument("--port",       type=int, default=443)
     parser.add_argument("--datacenter", default=None, help="Filtrar por datacenter")
     parser.add_argument("--env",        default="contingencia", help="Nombre del entorno (contingencia/produccion)")
     parser.add_argument("--output",     default="vm-inventory", help="Nombre base para archivos de salida")
     parser.add_argument("--format",     choices=["all", "json", "csv", "hcl"], default="all")
     args = parser.parse_args()
+
+    # Si no se paso password, pedir de forma segura (no queda en historial)
+    if not args.password:
+        args.password = getpass.getpass(f"Password para {args.user}@{args.host}: ")
 
     # Conectar
     si = connect_vcenter(args.host, args.user, args.password, args.port)

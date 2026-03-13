@@ -9,7 +9,7 @@ terraform {
   required_providers {
     vsphere = {
       source  = "hashicorp/vsphere"
-      version = ">= 2.6.0"
+      version = "2.11.0"
     }
   }
 }
@@ -67,6 +67,12 @@ resource "vsphere_virtual_machine" "vm" {
   firmware         = var.firmware
   efi_secure_boot_enabled = var.efi_secure_boot_enabled
 
+  # ---- Controladores SCSI ----
+  # Con 1 controlador: máx 13 discos de datos (unidades 1-6, 8-14)
+  # Con 2 controladores: máx 27 discos de datos
+  scsi_controller_count = var.scsi_controller_count
+  scsi_type             = var.scsi_type
+
   # ---- Opciones de ciclo de vida ----
   # IMPORTANTE: force_power_off=false evita apagados no planificados
   # Para hot-add de recursos NO se necesita apagar la VM
@@ -97,7 +103,7 @@ resource "vsphere_virtual_machine" "vm" {
 
   # ---- Disco de SO (siempre presente) ----
   disk {
-    label            = "disk0"
+    label            = "Hard disk 1"
     size             = var.os_disk_size_gb
     thin_provisioned = var.thin_provisioned
     eagerly_scrub    = var.eagerly_scrub
@@ -108,11 +114,12 @@ resource "vsphere_virtual_machine" "vm" {
   dynamic "disk" {
     for_each = var.data_disks
     content {
-      label            = "disk${disk.key + 1}"
+      label            = "Hard disk ${disk.key + 2}"
       size             = disk.value.size_gb
       thin_provisioned = lookup(disk.value, "thin_provisioned", true)
       eagerly_scrub    = lookup(disk.value, "eagerly_scrub", false)
-      unit_number      = disk.key + 1
+      # Saltar unidad 7 (reservada para controlador SCSI)
+      unit_number      = disk.key + 1 >= 7 ? disk.key + 2 : disk.key + 1
       datastore_id     = lookup(disk.value, "datastore_name", null) != null ? (
         data.vsphere_datastore.ds.id  # extender para múltiples datastores si se requiere
       ) : null
@@ -144,13 +151,28 @@ resource "vsphere_virtual_machine" "vm" {
 
   # ---- Lifecycle: prevenir destrucciones accidentales ----
   lifecycle {
-    # CRÍTICO: Evitar destrucción accidental de VMs en producción
-    prevent_destroy = var.prevent_destroy
+    prevent_destroy = false
 
-    # Ignorar cambios en campos que vCenter puede modificar automáticamente
+    # Ignorar atributos que vCenter gestiona autom\u00e1ticamente o que difieren
+    # entre el estado real importado y la configuraci\u00f3n declarada.
+    # Estos cambios NO modifican las VMs en producci\u00f3n.
     ignore_changes = [
       annotation,
-      disk[0].io_share_count,  # vCenter puede ajustar esto
+      sata_controller_count,
+      cdrom,
+      efi_secure_boot_enabled,
+      enable_disk_uuid,
+      enable_logging,
+      cpu_hot_add_enabled,
+      cpu_hot_remove_enabled,
+      memory_hot_add_enabled,
+      force_power_off,
+      boot_retry_delay,
+      boot_retry_enabled,
+      latency_sensitivity,
+      scsi_type,
+      disk,
+      network_interface,
     ]
   }
 }

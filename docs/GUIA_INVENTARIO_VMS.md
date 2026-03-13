@@ -16,11 +16,18 @@ En el Jump Host o máquina de control:
 python --version
 
 # Instalar dependencias del proyecto
+# --- Windows / PowerShell ---
 cd "C:\BACKUP SEPTIEMBRE\GIFHUB\PROYECTO IAAC"
 pip install -r scripts/requirements.txt
 
-# O instalar manualmente:
-pip install pyVmomi pyvmomi-requests tabulate pyyaml
+# --- WSL / Linux (recomendado) ---
+cd "/mnt/c/BACKUP SEPTIEMBRE/GIFHUB/PROYECTO IAAC"
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r scripts/requirements.txt
+
+# O instalar manualmente (dentro del entorno .venv):
+pip install pyVmomi PyYAML tabulate requests colorama Jinja2
 ```
 
 ### 2. Configurar credenciales
