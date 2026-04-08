@@ -1,0 +1,4 @@
+---
+# Variables específicas para hosts Linux — conexión SSH
+ansible_connection: ssh
+ansible_user: ansible-user

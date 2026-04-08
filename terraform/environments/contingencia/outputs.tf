@@ -44,3 +44,26 @@ output "tag_contingencia_id" {
   description = "ID del tag 'contingencia' para usar en otras configuraciones"
   value       = vsphere_tag.tag_contingencia.id
 }
+
+#------------------------------------------------------------------------------
+# Outputs del módulo vsphere-cluster-compute
+#------------------------------------------------------------------------------
+output "cluster_id" {
+  description = "ID del cluster AppIBM en vCenter (domain-c8541)"
+  value       = module.cluster_contingencia.cluster_id
+}
+
+output "cluster_resource_pool_id" {
+  description = "ID del resource pool raíz del cluster AppIBM"
+  value       = module.cluster_contingencia.resource_pool_id
+}
+
+output "cluster_datacenter_id" {
+  description = "ID del datacenter IBM"
+  value       = module.cluster_contingencia.datacenter_id
+}
+
+output "cluster_host_group_name" {
+  description = "Nombre del host group creado (vacío si enable_host_group = false)"
+  value       = module.cluster_contingencia.host_group_name
+}

@@ -1,0 +1,20 @@
+DESDE WSL QUEDA LA MV DE CONTROL IAC
+
+
+paso 1. desde WSL buscar la siguiente ruta:
+
+cd "/mnt/c/BACKUP SEPTIEMBRE/GIFHUB/PROYECTO IAAC"
+
+
+Paso 2. cd "/mnt/c/BACKUP SEPTIEMBRE/GIFHUB/PROYECTO IAAC"
+
+Paso 3. 
+
+python scripts/discovery/vm_inventory.py   --host vcsac.gnb.loc   --user aballestes@gnb.loc   --datacenter "IBM"   --format all   --output inventario_datacenter_contingencia
+
+
+Paso 4.
+
+
+python scripts/discovery/vm_inventory.py   --host vcsac.gnb.loc   --user aballestes@gnb.loc   --datacenter "IBM"   --format all   --output inventario_datacenter_contingencia
+

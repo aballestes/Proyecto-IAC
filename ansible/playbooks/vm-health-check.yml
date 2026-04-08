@@ -22,6 +22,7 @@
   hosts: localhost
   gather_facts: true
   connection: local
+  become: false
 
   vars:
     report_file: "/tmp/vm-health-report-{{ ansible_date_time.date }}.txt"
@@ -44,7 +45,8 @@
     - name: "HEALTH | Identificar VMs con VMware Tools desactualizadas o ausentes"
       ansible.builtin.set_fact:
         vms_tools_issues: >-
-          {{ all_vms.virtual_machines | selectattr('guest_tools_status', 'ne', 'guestToolsRunning')
+          {{ all_vms.virtual_machines | selectattr('guest_tools_status', 'defined')
+          | selectattr('guest_tools_status', 'ne', 'guestToolsRunning')
           | map(attribute='guest_name') | list }}
 
     - name: "HEALTH | Identificar VMs apagadas"
@@ -63,90 +65,193 @@
         msg: "VMs Apagadas ({{ vms_powered_off | length }}): {{ vms_powered_off }}"
       when: vms_powered_off | length > 0
 
-    - name: "HEALTH | Generar reporte de salud"
-      ansible.builtin.template:
-        src: "vm-health-report.j2"
-        dest: "{{ report_file }}"
+# ---- Health Check de datastores via vCenter API (sin SSH/WinRM) ----
+- name: "IaC | Health Check de datastores via vCenter API"
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  become: false
+
+  tasks:
+    - name: "DATASTORES | Obtener estado de datastores del datacenter"
+      community.vmware.vmware_datastore_info:
+        hostname:        "{{ vcenter_hostname }}"
+        username:        "{{ vcenter_username }}"
+        password:        "{{ vcenter_password }}"
+        validate_certs:  "{{ vcenter_validate_certs }}"
+        datacenter_name: "IBM"
+      register: ds_info
+      delegate_to: localhost
+
+    - name: "DATASTORES | Inicializar listas"
+      ansible.builtin.set_fact:
+        datastores_critical: []
+        datastores_inaccessible: []
+
+    - name: "DATASTORES | Detectar datastores con uso > {{ disk_warning_threshold | default(90) }}%"
+      ansible.builtin.set_fact:
+        datastores_critical: >-
+          {{ datastores_critical + [
+            item.name ~ ' — ' ~
+            ((item.capacity - item.freeSpace) / item.capacity * 100) | int | string ~
+            '% (libre: ' ~ (item.freeSpace / 1073741824) | round(1) | string ~ ' GB)'
+          ] }}
+      loop: "{{ ds_info.datastores | selectattr('accessible', 'equalto', true) | selectattr('capacity', 'gt', 0) | list }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: "((item.capacity - item.freeSpace) / item.capacity * 100) | int > (disk_warning_threshold | default(90) | int)"
+
+    - name: "DATASTORES | Detectar datastores inaccesibles"
+      ansible.builtin.set_fact:
+        datastores_inaccessible: >-
+          {{ ds_info.datastores | rejectattr('accessible', 'equalto', true) | map(attribute='name') | list }}
+
+    - name: "DATASTORES | Listar uso de todos los datastores accesibles"
+      ansible.builtin.debug:
+        msg: >-
+          [{{ item.type | default('VMFS') }}] {{ item.name }}:
+          {{ ((item.capacity - item.freeSpace) / item.capacity * 100) | int }}% usado —
+          libre {{ (item.freeSpace / 1073741824) | round(1) }} GB /
+          total {{ (item.capacity / 1073741824) | round(1) }} GB
+      loop: "{{ ds_info.datastores | selectattr('accessible', 'equalto', true) | selectattr('capacity', 'gt', 0) | list }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: "DATASTORES | ⚠️ Alerta — datastores críticos"
+      ansible.builtin.debug:
+        msg: "⚠️ DATASTORES CRÍTICOS (>{{ disk_warning_threshold | default(90) }}%): {{ datastores_critical }}"
+      when: datastores_critical | length > 0
+
+    - name: "DATASTORES | ✅ Datastores dentro de umbrales"
+      ansible.builtin.debug:
+        msg: "✅ Todos los datastores accesibles están dentro del umbral ({{ disk_warning_threshold | default(90) }}%)"
+      when: datastores_critical | length == 0
+
+    - name: "DATASTORES | ⚠️ Alerta — datastores inaccesibles"
+      ansible.builtin.debug:
+        msg: "⚠️ DATASTORES INACCESIBLES: {{ datastores_inaccessible }}"
+      when: datastores_inaccessible | length > 0
+
+# ---- Health Check de snapshots via vCenter API ----
+- name: "IaC | Health Check de snapshots via vCenter API"
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  become: false
+
+  tasks:
+    - name: "SNAPSHOTS | Obtener lista completa de VMs"
+      community.vmware.vmware_vm_info:
+        hostname:       "{{ vcenter_hostname }}"
+        username:       "{{ vcenter_username }}"
+        password:       "{{ vcenter_password }}"
+        validate_certs: "{{ vcenter_validate_certs }}"
+      register: vms_snap
+      delegate_to: localhost
+
+    - name: "SNAPSHOTS | Identificar VMs con snapshots activos"
+      ansible.builtin.set_fact:
+        vms_with_snapshots: >-
+          {{ vms_snap.virtual_machines
+             | selectattr('snapshots', 'defined')
+             | selectattr('snapshots', 'ne', none)
+             | selectattr('snapshots', 'ne', [])
+             | map(attribute='guest_name') | list }}
+
+    - name: "SNAPSHOTS | ⚠️ VMs con snapshots activos (impactan rendimiento y espacio)"
+      ansible.builtin.debug:
+        msg: "⚠️ VMs con snapshots ({{ vms_with_snapshots | length }}): {{ vms_with_snapshots }}"
+      when: vms_with_snapshots | length > 0
+
+    - name: "SNAPSHOTS | ✅ Sin snapshots detectados"
+      ansible.builtin.debug:
+        msg: "✅ No se detectaron snapshots activos en ninguna VM"
+      when: vms_with_snapshots | length == 0
+
+# ---- Reporte consolidado final ----
+- name: "IaC | Resumen consolidado del Health Check"
+  hosts: localhost
+  gather_facts: true
+  connection: local
+  become: false
+
+  tasks:
+    - name: "RESUMEN | Nota de método — health check via vCenter API pura"
+      ansible.builtin.debug:
+        msg: "INFO: Health check ejecutado via vCenter API (vmware_datastore_info + vmware_vm_info). SSH/WinRM pendiente cuenta de servicio."
+
+    - name: "RESUMEN | Obtener info completa de VMs via vCenter API"
+      community.vmware.vmware_vm_info:
+        hostname:       "{{ vcenter_hostname }}"
+        username:       "{{ vcenter_username }}"
+        password:       "{{ vcenter_password }}"
+        validate_certs: "{{ vcenter_validate_certs }}"
+      register: all_vms_summary
+      delegate_to: localhost
+
+    - name: "RESUMEN | Construir datos del reporte"
+      ansible.builtin.set_fact:
+        report_data:
+          fecha:                    "{{ ansible_date_time.iso8601 }}"
+          total_vms:                "{{ all_vms_summary.virtual_machines | length }}"
+          powered_on:               "{{ all_vms_summary.virtual_machines | selectattr('power_state', 'eq', 'poweredOn') | list | length }}"
+          powered_off:              "{{ all_vms_summary.virtual_machines | selectattr('power_state', 'eq', 'poweredOff') | list | length }}"
+          tools_ok:                 "{{ all_vms_summary.virtual_machines | selectattr('guest_tools_status', 'defined') | selectattr('guest_tools_status', 'eq', 'guestToolsRunning') | list | length }}"
+          tools_issues:             "{{ all_vms_summary.virtual_machines | selectattr('guest_tools_status', 'defined') | selectattr('guest_tools_status', 'ne', 'guestToolsRunning') | map(attribute='guest_name') | list }}"
+          linux_total:              "{{ groups['linux_vms'] | default([]) | length }}"
+          windows_total:            "{{ groups['windows_vms'] | default([]) | length }}"
+          datastores_critical_list: "{{ datastores_critical | default([]) }}"
+          datastores_inaccessible:  "{{ datastores_inaccessible | default([]) }}"
+          vms_with_snapshots:       "{{ vms_with_snapshots | default([]) }}"
+
+    - name: "RESUMEN | Imprimir resumen en pantalla"
+      ansible.builtin.debug:
+        msg:
+          - "============================================================"
+          - "  HEALTH CHECK REPORT — {{ report_data.fecha }}"
+          - "============================================================"
+          - "  Total VMs detectadas  : {{ report_data.total_vms }}"
+          - "  Encendidas            : {{ report_data.powered_on }}"
+          - "  Apagadas              : {{ report_data.powered_off }}"
+          - "  VMware Tools OK       : {{ report_data.tools_ok }}"
+          - "  Linux VMs (inventario): {{ report_data.linux_total }}"
+          - "  Windows VMs (inventar): {{ report_data.windows_total }}"
+          - "  VMs con Tools issues  : {{ report_data.tools_issues }}"
+          - "------------------------------------------------------------"
+          - "  Datastores críticos   : {{ report_data.datastores_critical_list | length }}"
+          - "  Datastores inacc.     : {{ report_data.datastores_inaccessible | length }}"
+          - "  VMs con snapshots     : {{ report_data.vms_with_snapshots | length }}"
+          - "  Detalle críticos DS   : {{ report_data.datastores_critical_list }}"
+          - "  VMs con snapshots     : {{ report_data.vms_with_snapshots }}"
+          - "============================================================"
+
+    - name: "RESUMEN | Guardar reporte en archivo"
+      ansible.builtin.copy:
+        content: |
+          ============================================================
+          HEALTH CHECK REPORT — {{ report_data.fecha }}
+          Método: vCenter API (vmware_datastore_info + vmware_vm_info)
+          ============================================================
+          Total VMs detectadas  : {{ report_data.total_vms }}
+          Encendidas            : {{ report_data.powered_on }}
+          Apagadas              : {{ report_data.powered_off }}
+          VMware Tools OK       : {{ report_data.tools_ok }}
+          Linux VMs (inventario): {{ report_data.linux_total }}
+          Windows VMs (inventar): {{ report_data.windows_total }}
+          VMs con Tools issues  : {{ report_data.tools_issues }}
+          ------------------------------------------------------------
+          Datastores críticos   : {{ report_data.datastores_critical_list | length }}
+          Datastores inacc.     : {{ report_data.datastores_inaccessible | length }}
+          VMs con snapshots     : {{ report_data.vms_with_snapshots | length }}
+          Detalle críticos DS   : {{ report_data.datastores_critical_list }}
+          VMs con snapshots     : {{ report_data.vms_with_snapshots }}
+          ------------------------------------------------------------
+          NOTA: SSH/WinRM pendiente creación cuenta svc-ansible (AD)
+          ============================================================
+        dest: "/tmp/vm-health-report-{{ ansible_date_time.date }}.txt"
         mode: '0644'
       delegate_to: localhost
-      ignore_errors: true
 
-    - name: "HEALTH | Path del reporte generado"
+    - name: "RESUMEN | Reporte guardado en"
       ansible.builtin.debug:
-        msg: "Reporte guardado en: {{ report_file }}"
-
-# ---- Health Check de conectividad SSH/WinRM hacia VMs Linux ----
-- name: "IaC | Verificar conectividad hacia VMs Linux"
-  hosts: linux_vms
-  gather_facts: false
-  ignore_unreachable: true
-
-  tasks:
-    - name: "CONN | Verificar conectividad SSH"
-      ansible.builtin.ping:
-      register: ping_result
-      ignore_errors: true
-
-    - name: "CONN | Verificar uso de disco (Linux)"
-      ansible.builtin.shell: df -h / | tail -1 | awk '{print $5}' | tr -d '%'
-      register: disk_usage
-      changed_when: false
-      ignore_errors: true
-      when: ping_result is success
-
-    - name: "CONN | Alerta si disco > 90%"
-      ansible.builtin.debug:
-        msg: "⚠️ ALERTA: Disco root al {{ disk_usage.stdout }}% en {{ inventory_hostname }}"
-      when:
-        - ping_result is success
-        - disk_usage.stdout is defined
-        - disk_usage.stdout | int > 90
-
-    - name: "CONN | Verificar memoria disponible (Linux)"
-      ansible.builtin.shell: free -m | awk '/^Mem:/{printf "%.0f", ($3/$2)*100}'
-      register: mem_usage
-      changed_when: false
-      ignore_errors: true
-      when: ping_result is success
-
-    - name: "CONN | Alerta si RAM > 85%"
-      ansible.builtin.debug:
-        msg: "⚠️ ALERTA: RAM al {{ mem_usage.stdout }}% en {{ inventory_hostname }}"
-      when:
-        - ping_result is success
-        - mem_usage.stdout is defined
-        - mem_usage.stdout | int > 85
-
-    - name: "CONN | VMs no accesibles"
-      ansible.builtin.debug:
-        msg: "❌ HOST NO ACCESIBLE: {{ inventory_hostname }} ({{ ansible_host }})"
-      when: ping_result is failed or ping_result is unreachable
-
-# ---- Health Check de conectividad WinRM hacia VMs Windows ----
-- name: "IaC | Verificar conectividad hacia VMs Windows"
-  hosts: windows_vms
-  gather_facts: false
-  ignore_unreachable: true
-
-  tasks:
-    - name: "WIN | Verificar conectividad WinRM"
-      ansible.windows.win_ping:
-      register: win_ping
-      ignore_errors: true
-
-    - name: "WIN | Verificar uso de disco C: (Windows)"
-      ansible.windows.win_shell: |
-        $disk = Get-PSDrive C
-        [math]::Round(($disk.Used / ($disk.Used + $disk.Free)) * 100)
-      register: win_disk
-      changed_when: false
-      ignore_errors: true
-      when: win_ping is success
-
-    - name: "WIN | Alerta si disco C: > 90%"
-      ansible.builtin.debug:
-        msg: "⚠️ ALERTA: Disco C: al {{ win_disk.stdout | trim }}% en {{ inventory_hostname }}"
-      when:
-        - win_ping is success
-        - win_disk.stdout is defined
-        - win_disk.stdout | trim | int > 90
+        msg: "Reporte: /tmp/vm-health-report-{{ ansible_date_time.date }}.txt"

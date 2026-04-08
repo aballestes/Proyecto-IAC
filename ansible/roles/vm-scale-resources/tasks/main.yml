@@ -32,34 +32,38 @@
     fail_msg: "Se requiere definir 'scale_vm_name' y 'scale_datacenter'"
 
 - name: "SCALE | Obtener información actual de la VM: {{ scale_vm_name }}"
-  community.vmware.vmware_guest_info:
-    hostname:         "{{ vcenter_hostname }}"
-    username:         "{{ vcenter_username }}"
-    password:         "{{ vcenter_password }}"
-    validate_certs:   "{{ vcenter_validate_certs }}"
-    datacenter:       "{{ scale_datacenter }}"
-    name:             "{{ scale_vm_name }}"
+  vmware.vmware_rest.vcenter_vm_info:
+    vcenter_hostname: "{{ vcenter_hostname }}"
+    vcenter_username: "{{ vcenter_username }}"
+    vcenter_password: "{{ vcenter_password }}"
+    vcenter_validate_certs: "{{ vcenter_validate_certs }}"
+    filter_names:
+      - "{{ scale_vm_name }}"
   register: vm_current_info
   delegate_to: localhost
+
+- name: "SCALE | Verificar que la VM existe en vCenter"
+  ansible.builtin.assert:
+    that:
+      - vm_current_info.value | length > 0
+    fail_msg: "VM '{{ scale_vm_name }}' no encontrada en vCenter"
 
 - name: "SCALE | Mostrar estado actual de la VM"
   ansible.builtin.debug:
     msg:
-      - "VM: {{ scale_vm_name }}"
-      - "Estado: {{ vm_current_info.instance.hw_power_status }}"
-      - "CPU actual: {{ vm_current_info.instance.hw_processor_count }} vCPUs"
-      - "RAM actual: {{ vm_current_info.instance.hw_memtotal_mb }} MB"
-      - "VMware Tools: {{ vm_current_info.instance.guest_tools_status }}"
+      - "VM     : {{ scale_vm_name }}"
+      - "Estado : {{ vm_current_info.value[0].power_state }}"
+      - "CPU    : {{ vm_current_info.value[0].cpu_count }} vCPUs"
+      - "RAM    : {{ vm_current_info.value[0].memory_size_MiB }} MB"
 
 # ---- PRE-REQUISITO: VMware Tools debe estar corriendo para hot-add ----
 - name: "SCALE | Verificar que VMware Tools esté activo (hot-add requiere tools)"
   ansible.builtin.assert:
     that:
-      - vm_current_info.instance.guest_tools_status == "guestToolsRunning"
-    fail_msg: >
-      ADVERTENCIA: VMware Tools no está en estado 'guestToolsRunning' en {{ scale_vm_name }}.
-      El hot-add de CPU/RAM puede no funcionar correctamente.
-      Estado actual: {{ vm_current_info.instance.guest_tools_status }}
+      - vm_current_info.value[0].power_state == "POWERED_ON"
+    fail_msg: >-
+      VM {{ scale_vm_name }} no está encendida (estado: {{ vm_current_info.value[0].power_state }}).
+      El hot-add de CPU/RAM requiere que la VM esté encendida.
   ignore_errors: "{{ scale_ignore_tools_check | default(false) }}"
 
 # ---- SNAPSHOT PREVIO AL CAMBIO ----
@@ -82,13 +86,13 @@
 
 - name: "SCALE | Snapshot creado"
   ansible.builtin.debug:
-    msg: "Snapshot '{{ snapshot_result.snapshot_results.snapshot_name | default('N/A') }}' creado exitosamente"
-  when: snapshot_result is defined and not snapshot_result.failed | default(false)
+    msg: "Snapshot pre-escala creado exitosamente en {{ scale_vm_name }}"
+  when: snapshot_result is defined and snapshot_result.changed | default(false)
 
 # ============================================================
 # ESCALADO DE CPU
 # ============================================================
-- name: "SCALE-CPU | Escalar vCPUs de {{ vm_current_info.instance.hw_processor_count }} → {{ scale_cpu }}"
+- name: "SCALE-CPU | Escalar vCPUs de {{ vm_current_info.value[0].cpu_count }} → {{ scale_cpu }}"
   community.vmware.vmware_guest:
     hostname:       "{{ vcenter_hostname }}"
     username:       "{{ vcenter_username }}"
@@ -105,18 +109,18 @@
   register: cpu_scale_result
   when:
     - scale_cpu is defined
-    - scale_cpu | int != vm_current_info.instance.hw_processor_count | int
+    - scale_cpu | int != vm_current_info.value[0].cpu_count | int
   notify: "Notify scale completed"
 
 - name: "SCALE-CPU | Sin cambio necesario en CPU"
   ansible.builtin.debug:
-    msg: "CPU no requiere cambio: {{ vm_current_info.instance.hw_processor_count }} vCPUs (deseado: {{ scale_cpu | default('no especificado') }})"
-  when: scale_cpu is not defined or scale_cpu | int == vm_current_info.instance.hw_processor_count | int
+    msg: "CPU no requiere cambio: {{ vm_current_info.value[0].cpu_count }} vCPUs (deseado: {{ scale_cpu | default('no especificado') }})"
+  when: scale_cpu is not defined or scale_cpu | int == vm_current_info.value[0].cpu_count | int
 
 # ============================================================
 # ESCALADO DE MEMORIA
 # ============================================================
-- name: "SCALE-MEM | Escalar RAM {{ vm_current_info.instance.hw_memtotal_mb }}MB → {{ scale_memory_mb }}MB"
+- name: "SCALE-MEM | Escalar RAM {{ vm_current_info.value[0].memory_size_MiB }}MB → {{ scale_memory_mb }}MB"
   community.vmware.vmware_guest:
     hostname:       "{{ vcenter_hostname }}"
     username:       "{{ vcenter_username }}"
@@ -131,7 +135,7 @@
   register: mem_scale_result
   when:
     - scale_memory_mb is defined
-    - scale_memory_mb | int != vm_current_info.instance.hw_memtotal_mb | int
+    - scale_memory_mb | int != vm_current_info.value[0].memory_size_MiB | int
   notify: "Notify scale completed"
 
 - name: "SCALE-MEM | Resultado del escalado de memoria"
@@ -189,7 +193,7 @@
   when:
     - scale_add_disk is defined
     - disk_add_result.changed | default(false)
-    - "'Windows' not in vm_current_info.instance.hw_guest_full_name | default('')"
+    - "'Windows' not in vm_current_info.value[0].guest_OS | default('')"
   ignore_errors: true
   register: scsi_rescan
 
@@ -197,13 +201,13 @@
 # VERIFICACIÓN POST-ESCALA
 # ============================================================
 - name: "SCALE | Verificar estado final de la VM post-escala"
-  community.vmware.vmware_guest_info:
-    hostname:       "{{ vcenter_hostname }}"
-    username:       "{{ vcenter_username }}"
-    password:       "{{ vcenter_password }}"
-    validate_certs: "{{ vcenter_validate_certs }}"
-    datacenter:     "{{ scale_datacenter }}"
-    name:           "{{ scale_vm_name }}"
+  vmware.vmware_rest.vcenter_vm_info:
+    vcenter_hostname:    "{{ vcenter_hostname }}"
+    vcenter_username:    "{{ vcenter_username }}"
+    vcenter_password:    "{{ vcenter_password }}"
+    vcenter_validate_certs: "{{ vcenter_validate_certs }}"
+    filter_names:
+      - "{{ scale_vm_name }}"
   register: vm_final_info
   delegate_to: localhost
 
@@ -212,20 +216,20 @@
     msg:
       - "===== RESUMEN DE ESCALADO ====="
       - "VM: {{ scale_vm_name }}"
-      - "CPU: {{ vm_current_info.instance.hw_processor_count }} → {{ vm_final_info.instance.hw_processor_count }} vCPUs"
-      - "RAM: {{ vm_current_info.instance.hw_memtotal_mb }}MB → {{ vm_final_info.instance.hw_memtotal_mb }}MB"
+      - "CPU: {{ vm_current_info.value[0].cpu_count }} → {{ vm_final_info.value[0].cpu_count }} vCPUs"
+      - "RAM: {{ vm_current_info.value[0].memory_size_MiB }}MB → {{ vm_final_info.value[0].memory_size_MiB }}MB"
       - "Disco nuevo: {{ scale_add_disk.size_gb | default('N/A') }}GB"
-      - "Estado VM: {{ vm_final_info.instance.hw_power_status }}"
+      - "Estado VM: {{ vm_final_info.value[0].power_state }}"
       - "=============================="
 
 # ---- Registrar cambio en log de auditoría ----
 - name: "SCALE | Registrar cambio en log de auditoría"
   ansible.builtin.lineinfile:
-    path: "/var/log/ansible/iaac-scaling.log"
-    line: >
+    path: "/tmp/iaac-scaling.log"
+    line: >-
       {{ ansible_date_time.iso8601 }} | SCALE | {{ scale_vm_name }} |
-      CPU: {{ vm_current_info.instance.hw_processor_count }}→{{ vm_final_info.instance.hw_processor_count }} |
-      RAM: {{ vm_current_info.instance.hw_memtotal_mb }}→{{ vm_final_info.instance.hw_memtotal_mb }}MB |
+      CPU: {{ vm_current_info.value[0].cpu_count }}->{{ vm_final_info.value[0].cpu_count }} |
+      RAM: {{ vm_current_info.value[0].memory_size_MiB }}->{{ vm_final_info.value[0].memory_size_MiB }}MB |
       Disco: {{ scale_add_disk.size_gb | default('N/A') }}GB |
       Operador: {{ lookup('env', 'USER') }}
     create: true

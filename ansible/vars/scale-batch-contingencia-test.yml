@@ -1,0 +1,34 @@
+---
+###############################################################################
+# vars/scale-batch-contingencia-test.yml
+# VMs reales del cluster AppIBM — Datacenter: IBM
+#
+# Uso DRY-RUN (no aplica cambios):
+#   ansible-playbook playbooks/scale-resources.yml \
+#     -e "@vars/scale-batch-contingencia-test.yml" \
+#     -e "vcenter_hostname=192.168.77.152 vcenter_username=aballestes@gnb.loc vcenter_password='PASS' vcenter_validate_certs=false" \
+#     --check
+###############################################################################
+
+require_confirmation: false        # false = no pausa interactiva (para --check)
+scale_snapshot_before: false       # false en dry-run — no crear snapshots reales en test
+
+batch_vms:
+  # VM devtest: escalar CPU de 2→4 y RAM de 2048→4096 MB
+  - vm_name:    "NGINXPRU"
+    datacenter: "IBM"
+    cpu:        4
+    memory_mb:  4096
+
+  # VM app: solo escalar RAM de 4096→8192 MB
+  - vm_name:    "NGINXPRXLIBPRDHA"
+    datacenter: "IBM"
+    memory_mb:  8192
+
+  # VM app: solo agregar disco de 50GB thin en datastore POOL
+  - vm_name:    "NGINXPRXLIBPRDHA"
+    datacenter: "IBM"
+    add_disk:
+      size_gb:   50
+      thin:      true
+      datastore: "POOL"

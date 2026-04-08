@@ -1,0 +1,1224 @@
+{
+  "vms": [
+    {
+      "name": "NGINXPRXLIBPRD2PREP",
+      "guest_id": "sles15_64Guest",
+      "guest_full": "SUSE Linux Enterprise 15 (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 1,
+      "memory_mb": 4096,
+      "power_state": "poweredOn",
+      "ip_address": "10.10.10.113",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "REPLIC",
+      "networks": [
+        "dvportgroup-9552"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 20,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 50,
+          "unit": 1,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 50,
+          "unit": 2,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "efi",
+      "annotation": ""
+    },
+    {
+      "name": "NGIPRUP02MRPREP",
+      "guest_id": "sles15_64Guest",
+      "guest_full": "SUSE Linux Enterprise 15 (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 1,
+      "memory_mb": 4096,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.144.42",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-29589"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 20,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 50,
+          "unit": 1,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 50,
+          "unit": 2,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "efi",
+      "annotation": ""
+    },
+    {
+      "name": "NGINXATALLAPREP",
+      "guest_id": "sles15_64Guest",
+      "guest_full": "SUSE Linux Enterprise 15 (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 1,
+      "memory_mb": 4096,
+      "power_state": "poweredOff",
+      "ip_address": "",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-29589"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 20,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 50,
+          "unit": 1,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 50,
+          "unit": 2,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsNotRunning",
+      "firmware": "efi",
+      "annotation": ""
+    },
+    {
+      "name": "VROPSPREP",
+      "guest_id": "other3xLinux64Guest",
+      "guest_full": "Other 3.x or later Linux (64-bit)",
+      "num_cpus": 4,
+      "num_cores_per_socket": 1,
+      "memory_mb": 16384,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.77.108",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "VCENTERC8",
+      "networks": [
+        "dvportgroup-8556"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 20,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 250,
+          "unit": 1,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 4,
+          "unit": 2,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "bios",
+      "annotation": "VMware Aria Operations\n\nVersi\u00f3n 8.18.3 ejecut\u00e1ndose en Photon OS 5.0"
+    },
+    {
+      "name": "SAGSNLC",
+      "guest_id": "windows9Server64Guest",
+      "guest_full": "Microsoft Windows Server 2016 (64-bit)",
+      "num_cpus": 4,
+      "num_cores_per_socket": 1,
+      "memory_mb": 16384,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.195.9",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-9547"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 80,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 100,
+          "unit": 1,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOld",
+      "firmware": "bios",
+      "annotation": ""
+    },
+    {
+      "name": "AWPC",
+      "guest_id": "windows8Server64Guest",
+      "guest_full": "Microsoft Windows Server 2012 (64-bit)",
+      "num_cpus": 8,
+      "num_cores_per_socket": 1,
+      "memory_mb": 16384,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.195.16",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-9547"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 80,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 100,
+          "unit": 1,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "bios",
+      "annotation": ""
+    },
+    {
+      "name": "SAAC",
+      "guest_id": "windows8Server64Guest",
+      "guest_full": "Microsoft Windows Server 2012 (64-bit)",
+      "num_cpus": 8,
+      "num_cores_per_socket": 1,
+      "memory_mb": 16384,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.195.6",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-9547"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 80,
+          "unit": 0,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 140,
+          "unit": 1,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 80,
+          "unit": 2,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOld",
+      "firmware": "bios",
+      "annotation": ""
+    },
+    {
+      "name": "POSTIBDREALPREP",
+      "guest_id": "windows2019srvNext_64Guest",
+      "guest_full": "Microsoft Windows Server 2022 (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 2,
+      "memory_mb": 16384,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.144.26",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POSTILIONDES",
+      "networks": [
+        "dvportgroup-29589"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 70,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 80,
+          "unit": 1,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 100,
+          "unit": 2,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 4",
+          "size_gb": 50,
+          "unit": 3,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 5",
+          "size_gb": 30,
+          "unit": 4,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 6",
+          "size_gb": 20,
+          "unit": 5,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "efi",
+      "annotation": ""
+    },
+    {
+      "name": "POSTIBDOFFPREP",
+      "guest_id": "windows2019srvNext_64Guest",
+      "guest_full": "Microsoft Windows Server 2022 (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 2,
+      "memory_mb": 16384,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.144.27",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POSTILIONDES",
+      "networks": [
+        "dvportgroup-29589"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 70,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 80,
+          "unit": 1,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 30,
+          "unit": 2,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 4",
+          "size_gb": 50,
+          "unit": 3,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 5",
+          "size_gb": 30,
+          "unit": 4,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 6",
+          "size_gb": 20,
+          "unit": 5,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "efi",
+      "annotation": ""
+    },
+    {
+      "name": "POSTIBDNIXPREP",
+      "guest_id": "windows2019srvNext_64Guest",
+      "guest_full": "Microsoft Windows Server 2022 (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 2,
+      "memory_mb": 16384,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.144.28",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POSTILIONDES",
+      "networks": [
+        "dvportgroup-29593"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 70,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 80,
+          "unit": 1,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 100,
+          "unit": 2,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 4",
+          "size_gb": 50,
+          "unit": 3,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 5",
+          "size_gb": 30,
+          "unit": 4,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 6",
+          "size_gb": 20,
+          "unit": 5,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "efi",
+      "annotation": "<CloudHive Annotation>\n<Nic1>\nFWNet:FW-vlanid-3702-SG-Portgroup\nUserNet:App_Contingencia_SVB_21\nUserNetUUID:dvportgroup-29589\nTime:2025-10-11 00:26:47\n</Nic1>\nMD5:889e9086649e262dedf378bd7d79b89e\n</CloudHive Annotation>"
+    },
+    {
+      "name": "NGIPRUP01MRPREP",
+      "guest_id": "sles15_64Guest",
+      "guest_full": "SUSE Linux Enterprise 15 (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 1,
+      "memory_mb": 4096,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.144.41",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-29589"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 20,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 50,
+          "unit": 1,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 50,
+          "unit": 2,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "efi",
+      "annotation": ""
+    },
+    {
+      "name": "LT",
+      "guest_id": "otherGuest",
+      "guest_full": "Other (32-bit)",
+      "num_cpus": 8,
+      "num_cores_per_socket": 1,
+      "memory_mb": 16384,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.238.1",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-9548"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 20,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 20,
+          "unit": 1,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 250,
+          "unit": 2,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 4",
+          "size_gb": 20,
+          "unit": 3,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOld",
+      "firmware": "bios",
+      "annotation": ""
+    },
+    {
+      "name": "MGORACLEC",
+      "guest_id": "oracleLinux7_64Guest",
+      "guest_full": "Oracle Linux 7 (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 1,
+      "memory_mb": 10240,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.194.34",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-9546"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 40,
+          "unit": 0,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "bios",
+      "annotation": ""
+    },
+    {
+      "name": "SG_vDSM_0_21",
+      "guest_id": "other26xLinux64Guest",
+      "guest_full": "Other 2.6.x Linux (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 1,
+      "memory_mb": 6144,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.160.37",
+      "folder": "SG",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "Disconnected",
+        "Disconnected",
+        "dvportgroup-9577",
+        "dvportgroup-9576"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 1,
+          "unit": 0,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 4,
+          "unit": 1,
+          "thin": true
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "bios",
+      "annotation": "This asset is created and managed by Hillstone Security Service. Please do not make any manual change."
+    },
+    {
+      "name": "SG_vSSM_0_17",
+      "guest_id": "other26xLinux64Guest",
+      "guest_full": "Other 2.6.x Linux (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 1,
+      "memory_mb": 6144,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.160.35",
+      "folder": "SG",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-15557",
+        "Disconnected",
+        "Disconnected",
+        "dvportgroup-9577",
+        "dvportgroup-29590",
+        "Disconnected",
+        "Disconnected",
+        "dvportgroup-9576",
+        "Disconnected",
+        "Disconnected"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 1,
+          "unit": 0,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 4,
+          "unit": 1,
+          "thin": true
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "bios",
+      "annotation": "This asset is created and managed by Hillstone Security Service. Please do not make any manual change."
+    },
+    {
+      "name": "POSTIAPPREP",
+      "guest_id": "windows2019srvNext_64Guest",
+      "guest_full": "Microsoft Windows Server 2022 (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 2,
+      "memory_mb": 8192,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.144.29",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POSTILIONDES",
+      "networks": [
+        "dvportgroup-29591"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 70,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 60,
+          "unit": 1,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "efi",
+      "annotation": "<CloudHive Annotation>\n<Nic1>\nFWNet:FW-vlanid-3700-SG-Portgroup\nUserNet:App_Contingencia_SVB_21\nUserNetUUID:dvportgroup-29589\nTime:2025-10-11 00:26:22\n</Nic1>\nMD5:cf4643b2e65dd948ede8081bd5a5c8cb\n</CloudHive Annotation>"
+    },
+    {
+      "name": "VAULTC",
+      "guest_id": "windows8Server64Guest",
+      "guest_full": "Microsoft Windows Server 2012 (64-bit)",
+      "num_cpus": 4,
+      "num_cores_per_socket": 1,
+      "memory_mb": 12288,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.196.145",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-9548"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 200,
+          "unit": 0,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 700,
+          "unit": 1,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOld",
+      "firmware": "bios",
+      "annotation": ""
+    },
+    {
+      "name": "SG_vSCM_0_2",
+      "guest_id": "other26xLinux64Guest",
+      "guest_full": "Other 2.6.x Linux (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 1,
+      "memory_mb": 8192,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.160.34",
+      "folder": "SG",
+      "cluster": "AppIBM",
+      "host": "esx6appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-9577",
+        "dvportgroup-9576"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 1,
+          "unit": 0,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 16,
+          "unit": 1,
+          "thin": true
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "bios",
+      "annotation": "This asset is created and managed by Hillstone Security Service. Please do not make any manual change."
+    },
+    {
+      "name": "VCSAC",
+      "guest_id": "other3xLinux64Guest",
+      "guest_full": "Other 3.x or later Linux (64-bit)",
+      "num_cpus": 16,
+      "num_cores_per_socket": 1,
+      "memory_mb": 39936,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.77.152",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx7appc.gnb.loc",
+      "datastore": "VCENTERC8",
+      "networks": [
+        "dvportgroup-8556"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 48,
+          "unit": 0,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 7,
+          "unit": 1,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 50,
+          "unit": 2,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 4",
+          "size_gb": 100,
+          "unit": 3,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 5",
+          "size_gb": 25,
+          "unit": 4,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 6",
+          "size_gb": 25,
+          "unit": 5,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 7",
+          "size_gb": 25,
+          "unit": 6,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 8",
+          "size_gb": 200,
+          "unit": 8,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 9",
+          "size_gb": 10,
+          "unit": 9,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 10",
+          "size_gb": 25,
+          "unit": 10,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 11",
+          "size_gb": 25,
+          "unit": 11,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 12",
+          "size_gb": 100,
+          "unit": 12,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 13",
+          "size_gb": 100,
+          "unit": 13,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 14",
+          "size_gb": 200,
+          "unit": 14,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 15",
+          "size_gb": 25,
+          "unit": 15,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 16",
+          "size_gb": 100,
+          "unit": 0,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 17",
+          "size_gb": 300,
+          "unit": 1,
+          "thin": true
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "bios",
+      "annotation": "VMware vCenter Server Appliance"
+    },
+    {
+      "name": "PVWAC",
+      "guest_id": "windows8Server64Guest",
+      "guest_full": "Microsoft Windows Server 2012 (64-bit)",
+      "num_cpus": 16,
+      "num_cores_per_socket": 1,
+      "memory_mb": 24576,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.196.18",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx7appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-9548"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 80,
+          "unit": 0,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 80,
+          "unit": 1,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOld",
+      "firmware": "bios",
+      "annotation": ""
+    },
+    {
+      "name": "SG_vSCM_0_1",
+      "guest_id": "other26xLinux64Guest",
+      "guest_full": "Other 2.6.x Linux (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 1,
+      "memory_mb": 8192,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.160.33",
+      "folder": "SG",
+      "cluster": "AppIBM",
+      "host": "esx7appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-9577",
+        "dvportgroup-9576"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 1,
+          "unit": 0,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 16,
+          "unit": 1,
+          "thin": true
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "bios",
+      "annotation": "This asset is created and managed by Hillstone Security Service. Please do not make any manual change."
+    },
+    {
+      "name": "FRC",
+      "guest_id": "windows2019srvNext_64Guest",
+      "guest_full": "Microsoft Windows Server 2022 (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 2,
+      "memory_mb": 10240,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.196.21",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx7appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-9548"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 70,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 30,
+          "unit": 1,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 30,
+          "unit": 2,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 4",
+          "size_gb": 100,
+          "unit": 3,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "efi",
+      "annotation": ""
+    },
+    {
+      "name": "EX3",
+      "guest_id": "windows8Server64Guest",
+      "guest_full": "Microsoft Windows Server 2012 (64-bit)",
+      "num_cpus": 12,
+      "num_cores_per_socket": 1,
+      "memory_mb": 40960,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.193.23",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx7appc.gnb.loc",
+      "datastore": "EXC",
+      "networks": [
+        "dvportgroup-9548",
+        "dvportgroup-9553",
+        "dvportgroup-9545"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 320,
+          "unit": 0,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 80,
+          "unit": 1,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 500,
+          "unit": 2,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 4",
+          "size_gb": 120,
+          "unit": 3,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 5",
+          "size_gb": 170,
+          "unit": 4,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 6",
+          "size_gb": 350,
+          "unit": 5,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "bios",
+      "annotation": ""
+    },
+    {
+      "name": "ADCONNETC",
+      "guest_id": "windows2019srvNext_64Guest",
+      "guest_full": "Microsoft Windows Server 2022 (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 2,
+      "memory_mb": 8192,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.196.163",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx7appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-9548"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 70,
+          "unit": 0,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "efi",
+      "annotation": ""
+    },
+    {
+      "name": "ADC",
+      "guest_id": "windows2019srvNext_64Guest",
+      "guest_full": "Microsoft Windows Server 2022 (64-bit)",
+      "num_cpus": 3,
+      "num_cores_per_socket": 1,
+      "memory_mb": 12288,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.144.135",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx7appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-9544"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 70,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 30,
+          "unit": 1,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 3",
+          "size_gb": 30,
+          "unit": 2,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 4",
+          "size_gb": 100,
+          "unit": 3,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "efi",
+      "annotation": ""
+    },
+    {
+      "name": "vSOMC",
+      "guest_id": "ubuntu64Guest",
+      "guest_full": "Ubuntu Linux (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 2,
+      "memory_mb": 6144,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.77.190",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx7appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-8556",
+        "dvportgroup-9576"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 60,
+          "unit": 0,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "bios",
+      "annotation": ""
+    },
+    {
+      "name": "PSMC",
+      "guest_id": "windows2019srvNext_64Guest",
+      "guest_full": "Microsoft Windows Server 2022 (64-bit)",
+      "num_cpus": 8,
+      "num_cores_per_socket": 2,
+      "memory_mb": 18432,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.196.17",
+      "folder": "Discovered virtual machine",
+      "cluster": "AppIBM",
+      "host": "esx7appc.gnb.loc",
+      "datastore": "POOL",
+      "networks": [
+        "dvportgroup-9548"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 70,
+          "unit": 0,
+          "thin": false
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 80,
+          "unit": 1,
+          "thin": false
+        }
+      ],
+      "tools_status": "toolsOld",
+      "firmware": "efi",
+      "annotation": ""
+    },
+    {
+      "name": "SG_vSSM_0_19",
+      "guest_id": "other26xLinux64Guest",
+      "guest_full": "Other 2.6.x Linux (64-bit)",
+      "num_cpus": 2,
+      "num_cores_per_socket": 1,
+      "memory_mb": 6144,
+      "power_state": "poweredOn",
+      "ip_address": "192.168.160.36",
+      "folder": "SG",
+      "cluster": "AppIBM",
+      "host": "esx7appc.gnb.loc",
+      "datastore": "esx7appc",
+      "networks": [
+        "dvportgroup-15557",
+        "Disconnected",
+        "Disconnected",
+        "dvportgroup-9577",
+        "Disconnected",
+        "Disconnected",
+        "Disconnected",
+        "dvportgroup-9576",
+        "Disconnected",
+        "Disconnected"
+      ],
+      "disks": [
+        {
+          "label": "Hard disk 1",
+          "size_gb": 1,
+          "unit": 0,
+          "thin": true
+        },
+        {
+          "label": "Hard disk 2",
+          "size_gb": 4,
+          "unit": 1,
+          "thin": true
+        }
+      ],
+      "tools_status": "toolsOk",
+      "firmware": "bios",
+      "annotation": "This asset is created and managed by Hillstone Security Service. Please do not make any manual change."
+    }
+  ],
+  "generated": "2026-03-03T14:54:43.900972",
+  "count": 28
+}

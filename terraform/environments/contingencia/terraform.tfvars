@@ -41,6 +41,17 @@ portgroup_names = [
 ]
 
 #------------------------------------------------------------------------------
+# Hosts ESXi — Cluster AppIBM (Contingencia)
+# Usados por módulo vsphere-cluster-compute para host groups (opcionales)
+# enable_host_group = true solo si DRS está habilitado en el cluster AppIBM
+#------------------------------------------------------------------------------
+esxi_hosts = [
+  "esx6appc.gnb.loc",
+  "esx7appc.gnb.loc"
+]
+enable_host_group = false
+
+#------------------------------------------------------------------------------
 # INVENTARIO DE VMs — CONTINGENCIA
 # Completar con el inventario real obtenido por script de discovery (Fase 0)
 # Formato: "nombre-exacto-en-vcenter" = { recursos }
@@ -57,7 +68,7 @@ vms_contingencia = {
     firmware             = "efi"
     os_disk_gb           = 20
     thin                 = true
-    datastore            = "REPLIC"
+    datastore            = "POOL"    # home .vmx en POOL — los VMDKs de datos están en REPLIC
     networks             = ["App_Contingencia_NEG_10"]
     folder               = "Discovered virtual machine"
     data_disks           = [

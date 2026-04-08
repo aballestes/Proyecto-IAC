@@ -68,6 +68,19 @@ variable "default_folder" {
   default     = "contingencia"
 }
 
+#---- Hosts ESXi del cluster de contingencia ----
+variable "esxi_hosts" {
+  description = "Lista de FQDNs de los hosts ESXi del cluster de contingencia. Usado por el módulo vsphere-cluster-compute para crear host groups opcionales."
+  type        = list(string)
+  default     = []
+}
+
+variable "enable_host_group" {
+  description = "Si true, crea un host group en el cluster con los hosts de esxi_hosts (requiere DRS habilitado en el cluster)."
+  type        = bool
+  default     = false
+}
+
 #---- Definición de VMs existentes (importar con terraform import) ----
 # Esta variable define el estado DESEADO de cada VM.
 # Al hacer terraform import, Terraform leerá el estado ACTUAL y lo comparará.

@@ -65,6 +65,7 @@
         msg: "Operación CANCELADA por el operador."
       when:
         - confirm_input is defined
+        - not (confirm_input.skipped | default(false))
         - confirm_input.user_input | default('') | upper != 'SI'
 
   tasks:

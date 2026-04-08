@@ -7,7 +7,7 @@ variable "vsphere_password" { type = string; sensitive = true; description = "Pa
 
 variable "vsphere_server" {
   type    = string
-  default = "vcenter-prod.dominio.local"
+  default = "192.168.77.153"
 }
 
 variable "allow_unverified_ssl" {

@@ -1,0 +1,47 @@
+name,guest_id,guest_full,num_cpus,memory_mb,power_state,ip_address,folder,cluster,datastore,tools_status,firmware,annotation
+NGINXPRXLIBPRD2PREP,sles15_64Guest,SUSE Linux Enterprise 15 (64-bit),2,4096,poweredOn,10.10.10.113,Discovered virtual machine,AppIBM,REPLIC,toolsOk,efi,
+NGIPRUP02MRPREP,sles15_64Guest,SUSE Linux Enterprise 15 (64-bit),2,4096,poweredOn,192.168.144.42,Discovered virtual machine,AppIBM,POOL,toolsOk,efi,
+NGINXATALLAPREP,sles15_64Guest,SUSE Linux Enterprise 15 (64-bit),2,4096,poweredOff,,Discovered virtual machine,AppIBM,POOL,toolsNotRunning,efi,
+VROPSPREP,other3xLinux64Guest,Other 3.x or later Linux (64-bit),4,16384,poweredOn,192.168.77.108,Discovered virtual machine,AppIBM,VCENTERC8,toolsOk,bios,"VMware Aria Operations
+
+Versión 8.18.3 ejecutándose en Photon OS 5.0"
+SAGSNLC,windows9Server64Guest,Microsoft Windows Server 2016 (64-bit),4,16384,poweredOn,192.168.195.9,Discovered virtual machine,AppIBM,POOL,toolsOld,bios,
+AWPC,windows8Server64Guest,Microsoft Windows Server 2012 (64-bit),8,16384,poweredOn,192.168.195.16,Discovered virtual machine,AppIBM,POOL,toolsOk,bios,
+SAAC,windows8Server64Guest,Microsoft Windows Server 2012 (64-bit),8,16384,poweredOn,192.168.195.6,Discovered virtual machine,AppIBM,POOL,toolsOld,bios,
+POSTIBDREALPREP,windows2019srvNext_64Guest,Microsoft Windows Server 2022 (64-bit),2,16384,poweredOn,192.168.144.26,Discovered virtual machine,AppIBM,POSTILIONDES,toolsOk,efi,
+POSTIBDOFFPREP,windows2019srvNext_64Guest,Microsoft Windows Server 2022 (64-bit),2,16384,poweredOn,192.168.144.27,Discovered virtual machine,AppIBM,POSTILIONDES,toolsOk,efi,
+POSTIBDNIXPREP,windows2019srvNext_64Guest,Microsoft Windows Server 2022 (64-bit),2,16384,poweredOn,192.168.144.28,Discovered virtual machine,AppIBM,POSTILIONDES,toolsOk,efi,"<CloudHive Annotation>
+<Nic1>
+FWNet:FW-vlanid-3702-SG-Portgroup
+UserNet:App_Contingencia_SVB_21
+UserNetUUID:dvportgroup-29589
+Time:2025-10-11 00:26:47
+</Nic1>
+MD5:889e9086649e262dedf378bd7d79b89e
+</CloudHive Annotation>"
+NGIPRUP01MRPREP,sles15_64Guest,SUSE Linux Enterprise 15 (64-bit),2,4096,poweredOn,192.168.144.41,Discovered virtual machine,AppIBM,POOL,toolsOk,efi,
+LT,otherGuest,Other (32-bit),8,16384,poweredOn,192.168.238.1,Discovered virtual machine,AppIBM,POOL,toolsOld,bios,
+MGORACLEC,oracleLinux7_64Guest,Oracle Linux 7 (64-bit),2,10240,poweredOn,192.168.194.34,Discovered virtual machine,AppIBM,POOL,toolsOk,bios,
+SG_vDSM_0_21,other26xLinux64Guest,Other 2.6.x Linux (64-bit),2,6144,poweredOn,192.168.160.37,SG,AppIBM,POOL,toolsOk,bios,This asset is created and managed by Hillstone Security Service. Please do not make any manual change.
+SG_vSSM_0_17,other26xLinux64Guest,Other 2.6.x Linux (64-bit),2,6144,poweredOn,192.168.160.35,SG,AppIBM,POOL,toolsOk,bios,This asset is created and managed by Hillstone Security Service. Please do not make any manual change.
+POSTIAPPREP,windows2019srvNext_64Guest,Microsoft Windows Server 2022 (64-bit),2,8192,poweredOn,192.168.144.29,Discovered virtual machine,AppIBM,POSTILIONDES,toolsOk,efi,"<CloudHive Annotation>
+<Nic1>
+FWNet:FW-vlanid-3700-SG-Portgroup
+UserNet:App_Contingencia_SVB_21
+UserNetUUID:dvportgroup-29589
+Time:2025-10-11 00:26:22
+</Nic1>
+MD5:cf4643b2e65dd948ede8081bd5a5c8cb
+</CloudHive Annotation>"
+VAULTC,windows8Server64Guest,Microsoft Windows Server 2012 (64-bit),4,12288,poweredOn,192.168.196.145,Discovered virtual machine,AppIBM,POOL,toolsOld,bios,
+SG_vSCM_0_2,other26xLinux64Guest,Other 2.6.x Linux (64-bit),2,8192,poweredOn,192.168.160.34,SG,AppIBM,POOL,toolsOk,bios,This asset is created and managed by Hillstone Security Service. Please do not make any manual change.
+VCSAC,other3xLinux64Guest,Other 3.x or later Linux (64-bit),16,39936,poweredOn,192.168.77.152,Discovered virtual machine,AppIBM,VCENTERC8,toolsOk,bios,VMware vCenter Server Appliance
+PVWAC,windows8Server64Guest,Microsoft Windows Server 2012 (64-bit),16,24576,poweredOn,192.168.196.18,Discovered virtual machine,AppIBM,POOL,toolsOld,bios,
+SG_vSCM_0_1,other26xLinux64Guest,Other 2.6.x Linux (64-bit),2,8192,poweredOn,192.168.160.33,SG,AppIBM,POOL,toolsOk,bios,This asset is created and managed by Hillstone Security Service. Please do not make any manual change.
+FRC,windows2019srvNext_64Guest,Microsoft Windows Server 2022 (64-bit),2,10240,poweredOn,192.168.196.21,Discovered virtual machine,AppIBM,POOL,toolsOk,efi,
+EX3,windows8Server64Guest,Microsoft Windows Server 2012 (64-bit),12,40960,poweredOn,192.168.193.23,Discovered virtual machine,AppIBM,EXC,toolsOk,bios,
+ADCONNETC,windows2019srvNext_64Guest,Microsoft Windows Server 2022 (64-bit),2,8192,poweredOn,192.168.196.163,Discovered virtual machine,AppIBM,POOL,toolsOk,efi,
+ADC,windows2019srvNext_64Guest,Microsoft Windows Server 2022 (64-bit),3,12288,poweredOn,192.168.144.135,Discovered virtual machine,AppIBM,POOL,toolsOk,efi,
+vSOMC,ubuntu64Guest,Ubuntu Linux (64-bit),2,6144,poweredOn,192.168.77.190,Discovered virtual machine,AppIBM,POOL,toolsOk,bios,
+PSMC,windows2019srvNext_64Guest,Microsoft Windows Server 2022 (64-bit),8,18432,poweredOn,192.168.196.17,Discovered virtual machine,AppIBM,POOL,toolsOld,efi,
+SG_vSSM_0_19,other26xLinux64Guest,Other 2.6.x Linux (64-bit),2,6144,poweredOn,192.168.160.36,SG,AppIBM,esx7appc,toolsOk,bios,This asset is created and managed by Hillstone Security Service. Please do not make any manual change.

@@ -19,13 +19,14 @@ Análisis del inventario real del datacenter de contingencia:
 | `POSTIBD*` | `POSTIBDREALPREP`, `POSTIBDOFFPREP`, `POSTIBDNIXPREP` | PostiLion + BD + tipo |
 | `POSTIAPP*` | `POSTIAPPREP` | PostiLion + App |
 | `SG_v*` | `SG_vDSM_0_21`, `SG_vSCM_0_1` | Hivecloud Security Group + tipo + secuencia |
-| `*C` (sufijo C) | `ADC`, `ADCONNETC`, `VAULTC`, `PSMC`, `PVWAC`, `VCSAC` | Sufijo `C` = Contingencia |
-| `*PREP` (sufijo) | `NGINXATALLAPREP`, `VROPSPREP` | `PREP` = entorno de preparación/contingencia |
+| `*C` (sufijo C) | `ADC`, `ADCONNETC`, `VAULTC`, `PSMC`, `PVWAC`, `VCSAC` | Sufijo `C` = **ubicación física en datacenter de contingencia** — no indica ambiente (producción/desarrollo/pruebas) |
+| `*PREP` (sufijo) | `NGINXATALLAPREP`, `VROPSPREP`, `POSTIBDREALPREP`, `NGIPRUP01MRPREP`... | `PREP` = servidor **en despliegue** — estado transitorio: el ambiente final (producción, desarrollo, pruebas o contingencia) **aún no fue definido** |
 | `*MRP` | `NGIPRUP01MRPREP` | `MR` = posiblemente "Maestro Rupay" |
 
 ### 1.2. Problemas detectados
 
-- **Sin prefijo de ambiente consistente** — el ambiente (contingencia/producción) se indica con sufijos (`C`, `PREP`) o no se indica.
+- **Sufijo `C` indica datacenter, no ambiente** — el sufijo `C` al final del nombre identifica la **ubicación física** (datacenter de contingencia), no el ambiente de la aplicación (producción, desarrollo, pruebas o contingencia).
+- **Sufijo `PREP` indica despliegue sin ambiente definido** — el servidor está en proceso de despliegue y su ambiente final (producción, desarrollo, pruebas o contingencia) aún no fue asignado; no debe consolidarse como parte del nombre definitivo.
 - **Abreviaciones no documentadas** — `MR`, `SVB`, `NEG`, `INFO` en portgroups no tienen diccionario oficial.
 - **Sin separador estándar** — algunos nombres usan `_` (`SG_vDSM_0_21`), otros no usan separador (`POSTIBDREALPREP`).
 - **Longitudes inconsistentes** — desde 3 caracteres (`ADC`, `LT`) hasta 20+ (`NGINXPRXLIBPRD2PREP`).
@@ -62,6 +63,7 @@ PRDNGINXPRX01    ← Producción, NGINX, Proxy, 01
 - Solo mayúsculas, sin separadores para mantener compatibilidad con nombres actuales
 - Longitud máxima: **20 caracteres**
 - VMs de infraestructura (vCenter, Hivecloud) conservan su nombre de sistema (`VCSAC`, `SG_v*`)
+- **Omitir el sufijo `PREP`** en todos los nombres nuevos — indica estado de despliegue temporal y no debe formar parte del nombre definitivo de la VM
 
 ---
 
@@ -100,28 +102,100 @@ Datacenter-Contingencia/
 
 ## 4. Tags y Anotaciones
 
-### 4.1. Tags actuales
+### 4.1. Tags actuales en vCenter (AS-IS)
 
-- ¿Se usan tags oficiales en vCenter? (`Owner`, `Criticidad`, `Aplicación`, etc.).
-- Lista de categorías y ejemplos de tags:
-  - Categoría `Aplicacion`: `CELTA`, `COREBANK`, `SWIFT`, etc.
-  - Categoría `Criticidad`: `CRITICA`, `ALTA`, `MEDIA`, `BAJA`.
+**Estado confirmado:** Las VMs existentes en el datacenter de contingencia **no tienen ningún tag de vCenter asignado**. La columna `annotation` del inventario está vacía en la mayoría de las VMs. No existían categorías de tags creadas en vCenter antes de la implementación IaC.
 
-### 4.2. Notas / Annotations
+### 4.2. Notas / Annotations reales encontradas
 
-Revisar la columna de `Notes` en el inventario (cuando exista):
+Análisis completo del campo `annotation` del inventario `inventario_datacenter_contingencia.csv`:
 
-- Información útil encontrada (dueño, contacto, ticket, etc.).
-- Información “basura” o técnica que se podría mover a otro lado.
+| VM | Annotation encontrada | Tipo |
+|----|----------------------|------|
+| `VCSAC` | `VMware vCenter Server Appliance` | Descriptiva — sistema |
+| `VROPSPREP` | `VMware Aria Operations — Versión 8.18.3 ejecutándose en Photon OS 5.0` | Descriptiva — sistema |
+| `POSTIBDNIXPREP` | Metadata CloudHive: FW-vlanid-3702, UserNet: `App_Contingencia_SVB_21` | Técnica — microsegmentación |
+| `POSTIAPPREP` | Metadata CloudHive: FW-vlanid-3700, UserNet: `App_Contingencia_SVB_21` | Técnica — microsegmentación |
+| `SG_vDSM_0_21` | `This asset is created and managed by Hillstone Security Service. Please do not make any manual change.` | Gestión automática |
+| `SG_vSSM_0_17` | `This asset is created and managed by Hillstone Security Service. Please do not make any manual change.` | Gestión automática |
+| `SG_vSSM_0_19` | `This asset is created and managed by Hillstone Security Service. Please do not make any manual change.` | Gestión automática |
+| `SG_vSCM_0_1` | `This asset is created and managed by Hillstone Security Service. Please do not make any manual change.` | Gestión automática |
+| `SG_vSCM_0_2` | `This asset is created and managed by Hillstone Security Service. Please do not make any manual change.` | Gestión automática |
+| 19 VMs restantes | *(vacío)* | Sin documentar |
 
-### 4.3. Propuesta de estándar de tags
+**Conclusiones:**
+- Las VMs `SG_v*` son gestionadas exclusivamente por Hivecloud (Hillstone) — **no se deben modificar con Terraform ni alterar su annotation**.
+- La metadata CloudHive en `POSTIBDNIXPREP` y `POSTIAPPREP` indica microsegmentación activa en VLAN `App_Contingencia_SVB_21`.
+- No existe información de dueño (`Owner`) ni contacto en ninguna VM — **gap de documentación pendiente**.
 
-Definir qué tags deberían ser obligatorios para cada VM nueva:
+### 4.3. Tags implementados con Terraform (TO-BE — vigentes desde Fase 1)
 
-- `Aplicacion` (obligatorio)
-- `Ambiente` (`PRD`, `PRE`, `DEV`, `QA`, `LAB`, `CONT`)
-- `Criticidad` (`CRITICA`, `ALTA`, `MEDIA`, `BAJA`)
-- `Owner` (equipo o área responsable)
+Los siguientes recursos fueron creados en vCenter mediante `terraform apply` en la tarea 1.2:
+
+**Categoría `Ambiente`** (cardinalidad: SINGLE — un tag por VM)
+
+| Tag | Descripción | Recurso Terraform |
+|-----|-------------|-------------------|
+| `contingencia` | VM pertenece al datacenter de contingencia | `vsphere_tag.tag_contingencia` |
+| `critico` | Servicio crítico — requiere aprobación para cambios | `vsphere_tag.tag_critico` |
+| `devtest` | VM de desarrollo o pruebas | `vsphere_tag.tag_devtest` |
+
+### 4.4. Clasificación de VMs por criticidad (datacenter contingencia)
+
+| VM | Servicio | Criticidad | Tag aplicado | Justificación |
+|----|---------|------------|-------------|---------------|
+| `ADC` | Active Directory DC | CRÍTICA | `critico` | Autenticación corporativa |
+| `ADCONNETC` | AD Connector | CRÍTICA | `critico` | Dependencia de AD |
+| `VAULTC` | Vault / CyberArk | CRÍTICA | `critico` | Gestión de credenciales |
+| `POSTIBDREALPREP` | PostiLion BD Real-time | CRÍTICA | `critico` | Procesamiento transaccional bancario |
+| `POSTIBDOFFPREP` | PostiLion BD Offline | CRÍTICA | `critico` | Procesamiento transaccional bancario |
+| `POSTIBDNIXPREP` | PostiLion BD Nix | CRÍTICA | `critico` | Procesamiento transaccional bancario |
+| `POSTIAPPREP` | PostiLion App | CRÍTICA | `critico` | Aplicación transaccional bancaria |
+| `EX3` | Exchange Server 2012 | CRÍTICA | `critico` | Correo corporativo (12 CPU / 40 GB RAM) |
+| `NGINXPRXLIBPRD2PREP` | NGINX Proxy Libreta | ALTA | `contingencia` | Proxy productivo activo (datastore REPLIC) |
+| `NGIPRUP01MRPREP` | NGI Proxy Rupay 01 | ALTA | `contingencia` | Proxy transacciones Rupay |
+| `NGIPRUP02MRPREP` | NGI Proxy Rupay 02 | ALTA | `contingencia` | Proxy transacciones Rupay |
+| `AWPC` | AWP App | ALTA | `contingencia` | Aplicación web producción |
+| `SAAC` | SAA App | ALTA | `contingencia` | Aplicación producción |
+| `SAGSNLC` | SAGS NL | ALTA | `contingencia` | Aplicación corporativa |
+| `PVWAC` | CyberArk PVWA | ALTA | `contingencia` | Acceso privilegiado |
+| `PSMC` | CyberArk PSM | ALTA | `contingencia` | Sesión privilegiada |
+| `FRC` | FR App | MEDIA | `contingencia` | Aplicación funcional |
+| `LT` | LT (legacy 32-bit) | MEDIA | `contingencia` | SO legacy — VMware Tools desactualizadas |
+| `MGORACLEC` | MG Oracle | MEDIA | `contingencia` | Base de datos Oracle |
+| `vSOMC` | vSOM Monitoreo | MEDIA | `contingencia` | Monitoreo Ubuntu |
+| `NGINXATALLAPREP` | NGINX Atalla | BAJA | `contingencia` | **Apagada** — stand-by intencional documentado |
+| `VCSAC` | vCenter Appliance | INFRAESTRUCTURA | *(sin tag IaC)* | No gestionar con Terraform |
+| `VROPSPREP` | VMware Aria Operations | INFRAESTRUCTURA | *(sin tag IaC)* | No gestionar con Terraform |
+| `SG_vDSM_0_21` | Hivecloud DSM | INFRAESTRUCTURA | *(sin tag IaC)* | Gestionado por Hillstone |
+| `SG_vSSM_0_17` | Hivecloud SSM | INFRAESTRUCTURA | *(sin tag IaC)* | Gestionado por Hillstone |
+| `SG_vSSM_0_19` | Hivecloud SSM | INFRAESTRUCTURA | *(sin tag IaC)* | Gestionado por Hillstone |
+| `SG_vSCM_0_1` | Hivecloud SCM | INFRAESTRUCTURA | *(sin tag IaC)* | Gestionado por Hillstone |
+| `SG_vSCM_0_2` | Hivecloud SCM | INFRAESTRUCTURA | *(sin tag IaC)* | Gestionado por Hillstone |
+
+### 4.5. Tags pendientes para Fase 2
+
+| Tag propuesto | Categoría | Cardinalidad | Estado | Bloqueante |
+|--------------|-----------|-------------|--------|-----------|
+| `SistemaOperativo` | SistemaOperativo | SINGLE | ✅ Implementado en `main.tf` | Sin bloqueante — datos en inventario |
+| `Aplicacion` | Aplicacion | SINGLE | ❌ Pendiente | Diccionario oficial pendiente de aprobación por Arquitectura |
+| `Owner` | Owner | SINGLE | ❌ Pendiente | Definición organizacional — requiere workshop con líderes de área |
+
+**Detalle tag `SistemaOperativo`** — valores tomados de columna `guest_full` del inventario:
+
+| guest_id | Tag (guest_full) |
+|----------|------------------|
+| `sles15_64Guest` | `SUSE Linux Enterprise 15 (64-bit)` |
+| `windows2019srvNext_64Guest` | `Microsoft Windows Server 2022 (64-bit)` |
+| `windows9Server64Guest` | `Microsoft Windows Server 2016 (64-bit)` |
+| `windows8Server64Guest` | `Microsoft Windows Server 2012 (64-bit)` |
+| `oracleLinux7_64Guest` | `Oracle Linux 7 (64-bit)` |
+| `ubuntu64Guest` | `Ubuntu Linux (64-bit)` |
+| `other26xLinux64Guest` | `Other 2.6.x Linux (64-bit)` |
+| `other3xLinux64Guest` | `Other 3.x or later Linux (64-bit)` |
+| `otherGuest` | `Other (32-bit)` |
+
+El tag se aplica **automáticamente** en el módulo `vms_contingencia` usando `compact(concat(...))` sobre el `guest_id` de cada VM — no requiere modificar el `.tfvars.hcl` por VM.
 
 ---
 

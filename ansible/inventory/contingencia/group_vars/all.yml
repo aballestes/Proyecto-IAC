@@ -16,11 +16,7 @@ vcenter_validate_certs: false
 ansible_ssh_private_key_file: "~/.ssh/iaac_rsa"
 ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
-# WinRM para Windows
-ansible_winrm_server_cert_validation: ignore
-ansible_winrm_transport: ntlm
-ansible_winrm_scheme: https
-ansible_port_winrm: 5986
+# WinRM para Windows (ver group_vars/windows_vms.yml para variables específicas)
 
 #------------------------------------------------------------------------------
 # Thresholds para health checks

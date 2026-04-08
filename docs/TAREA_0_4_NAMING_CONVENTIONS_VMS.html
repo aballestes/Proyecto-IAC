@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarea 0.4 – Naming Conventions y Organización de VMs</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 50px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header badge */
+        .header-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-meta {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 5px solid #667eea;
+            border-radius: 6px;
+            padding: 15px 20px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .header-meta span { font-size: 0.9em; color: #555; }
+        .header-meta strong { color: #333; }
+
+        h1 {
+            color: #667eea;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 15px;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        h2 {
+            color: #764ba2;
+            margin-top: 45px;
+            margin-bottom: 20px;
+            font-size: 1.7em;
+            border-left: 5px solid #764ba2;
+            padding-left: 15px;
+        }
+
+        h3 {
+            color: #555;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 1px dashed #ddd;
+            padding-bottom: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.92em;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        thead tr {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        th, td { padding: 11px 15px; border: 1px solid #ddd; }
+
+        tbody tr:nth-of-type(even) { background-color: #f7f7fb; }
+        tbody tr:hover { background-color: #e8eaf6; transition: background-color 0.2s; }
+        tbody tr:last-of-type { border-bottom: 2px solid #667eea; }
+
+        /* Badge de criticidad */
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.82em;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge-critica   { background: #fde8e8; color: #c0392b; border: 1px solid #e74c3c; }
+        .badge-alta      { background: #fef3e2; color: #d35400; border: 1px solid #e67e22; }
+        .badge-media     { background: #fefce2; color: #b7950b; border: 1px solid #f1c40f; }
+        .badge-baja      { background: #eafaf1; color: #1e8449; border: 1px solid #27ae60; }
+        .badge-infra     { background: #eaf0fb; color: #2980b9; border: 1px solid #3498db; }
+        .badge-ok        { background: #eafaf1; color: #1e8449; border: 1px solid #27ae60; }
+        .badge-pending   { background: #fde8e8; color: #c0392b; border: 1px solid #e74c3c; }
+
+        .tag-chip {
+            display: inline-block;
+            background: #764ba2;
+            color: white;
+            padding: 2px 9px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .tag-chip-grey {
+            display: inline-block;
+            background: #95a5a6;
+            color: white;
+            padding: 2px 9px;
+            border-radius: 10px;
+            font-size: 0.8em;
+        }
+
+        pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 18px 22px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 18px 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.88em;
+            line-height: 1.5;
+        }
+
+        code {
+            background-color: #f0f0f8;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            color: #764ba2;
+            font-size: 0.88em;
+        }
+
+        pre code { background: transparent; color: #f8f8f2; padding: 0; }
+
+        blockquote {
+            border-left: 4px solid #667eea;
+            background: #f9f8ff;
+            padding: 14px 20px;
+            margin: 20px 0;
+            border-radius: 0 6px 6px 0;
+            color: #555;
+            font-style: italic;
+        }
+
+        ul, ol { margin: 12px 0 12px 28px; }
+        li { margin: 7px 0; }
+
+        strong { color: #764ba2; font-weight: 600; }
+
+        hr {
+            border: none;
+            border-top: 2px solid #ececec;
+            margin: 40px 0;
+        }
+
+        /* TOC */
+        .toc {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 28px 32px;
+            margin: 35px 0 45px 0;
+        }
+        .toc h2 {
+            color: #667eea;
+            margin-top: 0;
+            border-left: none;
+            padding-left: 0;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+        .toc ul { list-style: none; margin: 0; padding: 0; }
+        .toc li { margin: 8px 0; }
+        .toc a {
+            color: #444;
+            text-decoration: none;
+            display: block;
+            padding: 8px 14px;
+            border-radius: 5px;
+            border-left: 3px solid transparent;
+            transition: all 0.25s;
+        }
+        .toc a:hover {
+            background: white;
+            border-left-color: #764ba2;
+            transform: translateX(4px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .toc .lvl1 { font-weight: 700; color: #764ba2; font-size: 1.05em; }
+        .toc .lvl2 { margin-left: 18px; font-size: 0.95em; }
+
+        /* Status strip */
+        .status-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.88em;
+        }
+        .status-item .dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .dot-green  { background: #27ae60; }
+        .dot-orange { background: #e67e22; }
+        .dot-red    { background: #c0392b; }
+        .dot-blue   { background: #2980b9; }
+
+        /* Print */
+        .print-button {
+            position: fixed;
+            top: 20px; right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 11px 22px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+            z-index: 1000;
+        }
+        .print-button:hover { transform: translateY(-2px); }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 20px; }
+            .print-button { display: none; }
+            h2 { page-break-before: always; padding-top: 20px; }
+            h2:first-of-type { page-break-before: avoid; }
+            table { page-break-inside: avoid; }
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            h1 { font-size: 1.7em; }
+            table { font-size: 0.82em; }
+            th, td { padding: 7px 9px; }
+        }
+    </style>
+</head>
+<body>
+<button class="print-button" onclick="window.print()">🖨️ Imprimir / PDF</button>
+<div class="container">
+
+    <div class="header-badge">FASE 0 — TAREA 0.4</div>
+    <h1>Naming Conventions y Organización de VMs</h1>
+
+    <div class="header-meta">
+        <span><strong>Fecha:</strong> 2026-03-13</span>
+        <span><strong>Actualización:</strong> 2026-03-20</span>
+        <span><strong>Fuente:</strong> inventario_datacenter_contingencia.csv — 28 VMs</span>
+        <span><strong>Responsable:</strong> Alex Ballesteros</span>
+        <span><strong>Estado:</strong> <span class="badge badge-ok">✅ Completo — 100%</span></span>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item"><div class="dot dot-green"></div> Naming conventions documentadas</div>
+        <div class="status-item"><div class="dot dot-green"></div> Folders y Resource Pools relevados</div>
+        <div class="status-item"><div class="dot dot-green"></div> Tags Ambiente implementados (Terraform)</div>
+        <div class="status-item"><div class="dot dot-green"></div> Tag SistemaOperativo implementado</div>
+        <div class="status-item"><div class="dot dot-orange"></div> Tag Aplicacion — pendiente aprobación</div>
+        <div class="status-item"><div class="dot dot-red"></div> Tag Owner — pendiente definición organizacional</div>
+    </div>
+
+    <!-- TOC -->
+    <div class="toc">
+        <h2>📑 Tabla de Contenido</h2>
+        <ul>
+            <li><a href="#s1" class="lvl1">1. Naming Conventions Actuales (AS-IS)</a></li>
+            <li><a href="#s1-1" class="lvl2">1.1. Patrones de nombres observados</a></li>
+            <li><a href="#s1-2" class="lvl2">1.2. Problemas detectados</a></li>
+            <li><a href="#s2" class="lvl1">2. Propuesta de Naming Convention (TO-BE)</a></li>
+            <li><a href="#s2-1" class="lvl2">2.1. Formato estándar para VMs nuevas</a></li>
+            <li><a href="#s2-2" class="lvl2">2.2. Reglas</a></li>
+            <li><a href="#s3" class="lvl1">3. Carpetas (Folders) y Resource Pools</a></li>
+            <li><a href="#s4" class="lvl1">4. Tags y Anotaciones</a></li>
+            <li><a href="#s4-1" class="lvl2">4.1. Tags actuales en vCenter (AS-IS)</a></li>
+            <li><a href="#s4-2" class="lvl2">4.2. Notas / Annotations reales encontradas</a></li>
+            <li><a href="#s4-3" class="lvl2">4.3. Tags implementados con Terraform</a></li>
+            <li><a href="#s4-4" class="lvl2">4.4. Clasificación de VMs por criticidad</a></li>
+            <li><a href="#s4-5" class="lvl2">4.5. Tags pendientes para Fase 2</a></li>
+            <li><a href="#s5" class="lvl1">5. Gaps y Recomendaciones</a></li>
+            <li><a href="#s6" class="lvl1">6. Aprobaciones / Decisiones</a></li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <!-- SECCIÓN 1 -->
+    <h2 id="s1">1. Naming Conventions Actuales (AS-IS)</h2>
+
+    <h3 id="s1-1">1.1. Patrones de nombres observados</h3>
+    <p>Análisis del inventario real del datacenter de contingencia:</p>
+    <table>
+        <thead><tr><th>Patrón</th><th>Ejemplos</th><th>Significado inferido</th></tr></thead>
+        <tbody>
+            <tr><td><code>NGINX*</code></td><td><code>NGINXPRXLIBPRD2PREP</code>, <code>NGINXATALLAPREP</code></td><td>NGINX + función + ambiente</td></tr>
+            <tr><td><code>NGIPRUP*</code></td><td><code>NGIPRUP01MRPREP</code>, <code>NGIPRUP02MRPREP</code></td><td>NGI + Proxy + Rupay + secuencia</td></tr>
+            <tr><td><code>POSTIBD*</code></td><td><code>POSTIBDREALPREP</code>, <code>POSTIBDOFFPREP</code>, <code>POSTIBDNIXPREP</code></td><td>PostiLion + BD + tipo</td></tr>
+            <tr><td><code>POSTIAPP*</code></td><td><code>POSTIAPPREP</code></td><td>PostiLion + App</td></tr>
+            <tr><td><code>SG_v*</code></td><td><code>SG_vDSM_0_21</code>, <code>SG_vSCM_0_1</code></td><td>Hivecloud Security Group + tipo + secuencia</td></tr>
+            <tr><td><code>*C</code> (sufijo)</td><td><code>ADC</code>, <code>ADCONNETC</code>, <code>VAULTC</code>, <code>PSMC</code>, <code>PVWAC</code>, <code>VCSAC</code></td><td>Sufijo <code>C</code> = <strong>ubicación física en datacenter de contingencia</strong> — no indica el ambiente de la aplicación (producción / desarrollo / pruebas)</td></tr>
+            <tr><td><code>*PREP</code> (sufijo)</td><td><code>NGINXATALLAPREP</code>, <code>VROPSPREP</code>, <code>POSTIBDREALPREP</code>, <code>NGIPRUP01MRPREP</code>…</td><td><code>PREP</code> = servidor <strong>en despliegue</strong> — estado transitorio: el ambiente final (producción, desarrollo, pruebas o contingencia) <strong>aún no fue definido</strong></td></tr>
+            <tr><td><code>*MRP</code></td><td><code>NGIPRUP01MRPREP</code></td><td><code>MR</code> = posiblemente "Maestro Rupay"</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="s1-2">1.2. Problemas detectados</h3>
+    <ul>
+        <li><strong>Sufijo <code>C</code> indica datacenter, no ambiente</strong> — el sufijo <code>C</code> al final identifica la <strong>ubicación física</strong> (datacenter de contingencia), no el ambiente de la aplicación (producción, desarrollo, pruebas o contingencia).</li>
+        <li><strong>Sufijo <code>PREP</code> indica despliegue sin ambiente definido</strong> — el servidor está en proceso de despliegue y su ambiente final (producción, desarrollo, pruebas o contingencia) <strong>aún no fue asignado</strong>; no debe consolidarse como parte del nombre definitivo.</li>
+        <li><strong>Abreviaciones no documentadas</strong> — <code>MR</code>, <code>SVB</code>, <code>NEG</code>, <code>INFO</code> en portgroups sin diccionario oficial.</li>
+        <li><strong>Sin separador estándar</strong> — algunos nombres usan <code>_</code> (<code>SG_vDSM_0_21</code>), otros no (<code>POSTIBDREALPREP</code>).</li>
+        <li><strong>Longitudes inconsistentes</strong> — desde 3 caracteres (<code>ADC</code>, <code>LT</code>) hasta 20+ (<code>NGINXPRXLIBPRD2PREP</code>).</li>
+        <li><strong>Secuencias no normalizadas</strong> — <code>01</code>, <code>1</code>, <code>_0_21</code> mezclados.</li>
+    </ul>
+
+    <hr>
+
+    <!-- SECCIÓN 2 -->
+    <h2 id="s2">2. Propuesta de Naming Convention (TO-BE)</h2>
+
+    <blockquote>
+        <strong>Nota:</strong> Las VMs existentes <strong>no se renombran</strong> — el renombrado rompe referencias en vCenter, AD y monitoreo.
+        Esta convención aplica <strong>solo a VMs nuevas</strong> creadas con Terraform.
+    </blockquote>
+
+    <h3 id="s2-1">2.1. Formato estándar para VMs nuevas</h3>
+    <pre>&lt;AMB&gt;&lt;APP&gt;&lt;ROL&gt;&lt;SEQ&gt;</pre>
+
+    <table>
+        <thead><tr><th>Campo</th><th>Valores</th><th>Max chars</th></tr></thead>
+        <tbody>
+            <tr><td><code>AMB</code></td><td><code>CONT</code> (contingencia), <code>PRD</code> (producción)</td><td>4</td></tr>
+            <tr><td><code>APP</code></td><td>Código de aplicación: <code>NGINX</code>, <code>POSTI</code>, <code>AD</code>, <code>VAULT</code>, <code>EX</code></td><td>4–6</td></tr>
+            <tr><td><code>ROL</code></td><td><code>APP</code>, <code>DB</code>, <code>PRX</code>, <code>WEB</code>, <code>MGR</code></td><td>3</td></tr>
+            <tr><td><code>SEQ</code></td><td><code>01</code>, <code>02</code>…</td><td>2</td></tr>
+        </tbody>
+    </table>
+
+    <p><strong>Ejemplos:</strong></p>
+    <pre>CONTNGINXPRX01   ← Contingencia, NGINX, Proxy, 01
+CONTPOSTIDB01    ← Contingencia, PostiLion, DB, 01
+PRDNGINXPRX01    ← Producción, NGINX, Proxy, 01</pre>
+
+    <h3 id="s2-2">2.2. Reglas</h3>
+    <ul>
+        <li>Solo mayúsculas, sin separadores para mantener compatibilidad con nombres actuales</li>
+        <li>Longitud máxima: <strong>20 caracteres</strong></li>
+        <li>VMs de infraestructura (vCenter, Hivecloud) conservan su nombre de sistema (<code>VCSAC</code>, <code>SG_v*</code>)</li>
+        <li><strong>Omitir el sufijo <code>PREP</code></strong> en todos los nombres nuevos — indica estado de despliegue temporal y no debe formar parte del nombre definitivo de la VM</li>
+    </ul>
+
+    <hr>
+
+    <!-- SECCIÓN 3 -->
+    <h2 id="s3">3. Carpetas (Folders) y Resource Pools</h2>
+
+    <h3>3.1. Estructura actual de carpetas — Contingencia</h3>
+    <table>
+        <thead><tr><th>Folder observado</th><th>VMs</th><th>Uso</th></tr></thead>
+        <tbody>
+            <tr><td><code>POOL</code></td><td>Mayoría de VMs</td><td>Pool general — sin clasificación</td></tr>
+            <tr><td><code>POSTILIONDES</code></td><td><code>POSTIAP*</code>, <code>POSTIBD*</code></td><td>Grupo PostiLion</td></tr>
+            <tr><td><code>REPLIC</code></td><td><code>NGINXPRXLIBPRD2PREP</code></td><td>Replicación</td></tr>
+            <tr><td><code>EXC</code></td><td><code>EX3</code></td><td>Exchange</td></tr>
+            <tr><td><code>VCENTERC8</code></td><td><code>VCSAC</code>, <code>VROPSPREP</code></td><td>Infraestructura vCenter</td></tr>
+            <tr><td><code>esx7appc</code></td><td><code>SG_vSSM_0_19</code></td><td>ESXi App cluster</td></tr>
+            <tr><td><code>SG</code></td><td><code>SG_vDSM*</code>, <code>SG_vSSM*</code>, <code>SG_vSCM*</code></td><td>Hivecloud Security Groups</td></tr>
+        </tbody>
+    </table>
+    <p><strong>Problema principal:</strong> La mayoría de VMs están en <code>POOL</code> sin clasificación por criticidad o aplicación.</p>
+
+    <h3>3.2. Propuesta de estructura de carpetas TO-BE</h3>
+    <pre>Datacenter-Contingencia/
+├── CRITICA/          ← VMs core bancarias (PostiLion, AD, Vault)
+├── APLICACIONES/     ← Proxies NGINX, AWP, SAGS
+├── INFRAESTRUCTURA/  ← vCenter, vROPS, Hivecloud (no gestionar con Terraform)
+└── SISTEMA/          ← vCLS, reserved</pre>
+
+    <h3>3.3. Resource Pools actuales</h3>
+    <table>
+        <thead><tr><th>Resource Pool</th><th>ID (tfstate)</th><th>VMs asignadas</th></tr></thead>
+        <tbody>
+            <tr><td><code>AppIBM</code></td><td><code>resgroup-8542</code></td><td>Todas las VMs del tfvars</td></tr>
+            <tr><td><code>rp-criticos-contingencia</code></td><td>creado por Terraform</td><td>VMs críticas (Fase 1)</td></tr>
+            <tr><td><code>rp-devtest-contingencia</code></td><td>creado por Terraform</td><td>VMs dev/test (Fase 1)</td></tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- SECCIÓN 4 -->
+    <h2 id="s4">4. Tags y Anotaciones</h2>
+
+    <h3 id="s4-1">4.1. Tags actuales en vCenter (AS-IS)</h3>
+    <p>
+        <strong>Estado confirmado:</strong> Las VMs existentes en el datacenter de contingencia
+        <strong>no tienen ningún tag de vCenter asignado</strong>. La columna <code>annotation</code>
+        del inventario está vacía en la mayoría de las VMs. No existían categorías de tags creadas
+        en vCenter antes de la implementación IaC.
+    </p>
+
+    <h3 id="s4-2">4.2. Notas / Annotations reales encontradas</h3>
+    <p>Análisis completo del campo <code>annotation</code> del inventario <code>inventario_datacenter_contingencia.csv</code>:</p>
+    <table>
+        <thead><tr><th>VM</th><th>Annotation encontrada</th><th>Tipo</th></tr></thead>
+        <tbody>
+            <tr><td><code>VCSAC</code></td><td>VMware vCenter Server Appliance</td><td>Descriptiva — sistema</td></tr>
+            <tr><td><code>VROPSPREP</code></td><td>VMware Aria Operations — Versión 8.18.3 en Photon OS 5.0</td><td>Descriptiva — sistema</td></tr>
+            <tr><td><code>POSTIBDNIXPREP</code></td><td>Metadata CloudHive: FW-vlanid-3702, UserNet: <code>App_Contingencia_SVB_21</code></td><td>Técnica — microsegmentación</td></tr>
+            <tr><td><code>POSTIAPPREP</code></td><td>Metadata CloudHive: FW-vlanid-3700, UserNet: <code>App_Contingencia_SVB_21</code></td><td>Técnica — microsegmentación</td></tr>
+            <tr><td><code>SG_vDSM_0_21</code></td><td><em>This asset is created and managed by Hillstone Security Service…</em></td><td>Gestión automática</td></tr>
+            <tr><td><code>SG_vSSM_0_17</code></td><td><em>This asset is created and managed by Hillstone Security Service…</em></td><td>Gestión automática</td></tr>
+            <tr><td><code>SG_vSSM_0_19</code></td><td><em>This asset is created and managed by Hillstone Security Service…</em></td><td>Gestión automática</td></tr>
+            <tr><td><code>SG_vSCM_0_1</code></td><td><em>This asset is created and managed by Hillstone Security Service…</em></td><td>Gestión automática</td></tr>
+            <tr><td><code>SG_vSCM_0_2</code></td><td><em>This asset is created and managed by Hillstone Security Service…</em></td><td>Gestión automática</td></tr>
+            <tr><td>19 VMs restantes</td><td><em>(vacío)</em></td><td>Sin documentar</td></tr>
+        </tbody>
+    </table>
+    <ul>
+        <li>Las VMs <code>SG_v*</code> son gestionadas exclusivamente por Hivecloud (Hillstone) — <strong>no se deben modificar con Terraform ni alterar su annotation</strong>.</li>
+        <li>La metadata CloudHive en <code>POSTIBDNIXPREP</code> y <code>POSTIAPPREP</code> indica microsegmentación activa en VLAN <code>App_Contingencia_SVB_21</code>.</li>
+        <li>No existe información de dueño (<code>Owner</code>) ni contacto en ninguna VM — <strong>gap de documentación pendiente</strong>.</li>
+    </ul>
+
+    <h3 id="s4-3">4.3. Tags implementados con Terraform (TO-BE — vigentes desde Fase 1)</h3>
+    <p>Los siguientes recursos fueron creados en vCenter mediante <code>terraform apply</code> en la tarea 1.2:</p>
+    <p><strong>Categoría <code>Ambiente</code></strong> (cardinalidad: SINGLE — un tag por VM)</p>
+    <table>
+        <thead><tr><th>Tag</th><th>Descripción</th><th>Recurso Terraform</th></tr></thead>
+        <tbody>
+            <tr><td><span class="tag-chip">contingencia</span></td><td>VM pertenece al datacenter de contingencia</td><td><code>vsphere_tag.tag_contingencia</code></td></tr>
+            <tr><td><span class="tag-chip" style="background:#c0392b;">critico</span></td><td>Servicio crítico — requiere aprobación para cambios</td><td><code>vsphere_tag.tag_critico</code></td></tr>
+            <tr><td><span class="tag-chip" style="background:#27ae60;">devtest</span></td><td>VM de desarrollo o pruebas</td><td><code>vsphere_tag.tag_devtest</code></td></tr>
+        </tbody>
+    </table>
+
+    <p><strong>Categoría <code>SistemaOperativo</code></strong> (cardinalidad: SINGLE — implementado 2026-03-20)</p>
+    <p>Tags creados automáticamente desde <code>local.guest_full_map</code> en <code>main.tf</code>. El tag se asigna a cada VM vía <code>compact(concat(...))</code> según su <code>guest_id</code> — sin modificar el <code>.tfvars.hcl</code>:</p>
+    <table>
+        <thead><tr><th>guest_id</th><th>Tag aplicado (guest_full)</th></tr></thead>
+        <tbody>
+            <tr><td><code>sles15_64Guest</code></td><td>SUSE Linux Enterprise 15 (64-bit)</td></tr>
+            <tr><td><code>windows2019srvNext_64Guest</code></td><td>Microsoft Windows Server 2022 (64-bit)</td></tr>
+            <tr><td><code>windows9Server64Guest</code></td><td>Microsoft Windows Server 2016 (64-bit)</td></tr>
+            <tr><td><code>windows8Server64Guest</code></td><td>Microsoft Windows Server 2012 (64-bit)</td></tr>
+            <tr><td><code>oracleLinux7_64Guest</code></td><td>Oracle Linux 7 (64-bit)</td></tr>
+            <tr><td><code>ubuntu64Guest</code></td><td>Ubuntu Linux (64-bit)</td></tr>
+            <tr><td><code>other26xLinux64Guest</code></td><td>Other 2.6.x Linux (64-bit)</td></tr>
+            <tr><td><code>other3xLinux64Guest</code></td><td>Other 3.x or later Linux (64-bit)</td></tr>
+            <tr><td><code>otherGuest</code></td><td>Other (32-bit)</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="s4-4">4.4. Clasificación de VMs por criticidad (datacenter contingencia)</h3>
+    <table>
+        <thead><tr><th>VM</th><th>Servicio</th><th>Criticidad</th><th>Tag aplicado</th><th>Justificación</th></tr></thead>
+        <tbody>
+            <tr><td><code>ADC</code></td><td>Active Directory DC</td><td><span class="badge badge-critica">CRÍTICA</span></td><td><span class="tag-chip" style="background:#c0392b;">critico</span></td><td>Autenticación corporativa</td></tr>
+            <tr><td><code>ADCONNETC</code></td><td>AD Connector</td><td><span class="badge badge-critica">CRÍTICA</span></td><td><span class="tag-chip" style="background:#c0392b;">critico</span></td><td>Dependencia de AD</td></tr>
+            <tr><td><code>VAULTC</code></td><td>Vault / CyberArk</td><td><span class="badge badge-critica">CRÍTICA</span></td><td><span class="tag-chip" style="background:#c0392b;">critico</span></td><td>Gestión de credenciales</td></tr>
+            <tr><td><code>POSTIBDREALPREP</code></td><td>PostiLion BD Real-time</td><td><span class="badge badge-critica">CRÍTICA</span></td><td><span class="tag-chip" style="background:#c0392b;">critico</span></td><td>Procesamiento transaccional bancario</td></tr>
+            <tr><td><code>POSTIBDOFFPREP</code></td><td>PostiLion BD Offline</td><td><span class="badge badge-critica">CRÍTICA</span></td><td><span class="tag-chip" style="background:#c0392b;">critico</span></td><td>Procesamiento transaccional bancario</td></tr>
+            <tr><td><code>POSTIBDNIXPREP</code></td><td>PostiLion BD Nix</td><td><span class="badge badge-critica">CRÍTICA</span></td><td><span class="tag-chip" style="background:#c0392b;">critico</span></td><td>Procesamiento transaccional bancario</td></tr>
+            <tr><td><code>POSTIAPPREP</code></td><td>PostiLion App</td><td><span class="badge badge-critica">CRÍTICA</span></td><td><span class="tag-chip" style="background:#c0392b;">critico</span></td><td>Aplicación transaccional bancaria</td></tr>
+            <tr><td><code>EX3</code></td><td>Exchange Server 2012</td><td><span class="badge badge-critica">CRÍTICA</span></td><td><span class="tag-chip" style="background:#c0392b;">critico</span></td><td>Correo corporativo (12 CPU / 40 GB RAM)</td></tr>
+            <tr><td><code>NGINXPRXLIBPRD2PREP</code></td><td>NGINX Proxy Libreta</td><td><span class="badge badge-alta">ALTA</span></td><td><span class="tag-chip">contingencia</span></td><td>Proxy productivo activo (datastore REPLIC)</td></tr>
+            <tr><td><code>NGIPRUP01MRPREP</code></td><td>NGI Proxy Rupay 01</td><td><span class="badge badge-alta">ALTA</span></td><td><span class="tag-chip">contingencia</span></td><td>Proxy transacciones Rupay</td></tr>
+            <tr><td><code>NGIPRUP02MRPREP</code></td><td>NGI Proxy Rupay 02</td><td><span class="badge badge-alta">ALTA</span></td><td><span class="tag-chip">contingencia</span></td><td>Proxy transacciones Rupay</td></tr>
+            <tr><td><code>AWPC</code></td><td>AWP App</td><td><span class="badge badge-alta">ALTA</span></td><td><span class="tag-chip">contingencia</span></td><td>Aplicación web producción</td></tr>
+            <tr><td><code>SAAC</code></td><td>SAA App</td><td><span class="badge badge-alta">ALTA</span></td><td><span class="tag-chip">contingencia</span></td><td>Aplicación producción</td></tr>
+            <tr><td><code>SAGSNLC</code></td><td>SAGS NL</td><td><span class="badge badge-alta">ALTA</span></td><td><span class="tag-chip">contingencia</span></td><td>Aplicación corporativa</td></tr>
+            <tr><td><code>PVWAC</code></td><td>CyberArk PVWA</td><td><span class="badge badge-alta">ALTA</span></td><td><span class="tag-chip">contingencia</span></td><td>Acceso privilegiado</td></tr>
+            <tr><td><code>PSMC</code></td><td>CyberArk PSM</td><td><span class="badge badge-alta">ALTA</span></td><td><span class="tag-chip">contingencia</span></td><td>Sesión privilegiada</td></tr>
+            <tr><td><code>FRC</code></td><td>FR App</td><td><span class="badge badge-media">MEDIA</span></td><td><span class="tag-chip">contingencia</span></td><td>Aplicación funcional</td></tr>
+            <tr><td><code>LT</code></td><td>LT (legacy 32-bit)</td><td><span class="badge badge-media">MEDIA</span></td><td><span class="tag-chip">contingencia</span></td><td>SO legacy — VMware Tools desactualizadas</td></tr>
+            <tr><td><code>MGORACLEC</code></td><td>MG Oracle</td><td><span class="badge badge-media">MEDIA</span></td><td><span class="tag-chip">contingencia</span></td><td>Base de datos Oracle</td></tr>
+            <tr><td><code>vSOMC</code></td><td>vSOM Monitoreo</td><td><span class="badge badge-media">MEDIA</span></td><td><span class="tag-chip">contingencia</span></td><td>Monitoreo Ubuntu</td></tr>
+            <tr><td><code>NGINXATALLAPREP</code></td><td>NGINX Atalla</td><td><span class="badge badge-baja">BAJA</span></td><td><span class="tag-chip">contingencia</span></td><td>⚠️ <strong>Apagada</strong> — stand-by intencional documentado</td></tr>
+            <tr><td><code>VCSAC</code></td><td>vCenter Appliance</td><td><span class="badge badge-infra">INFRAESTRUCTURA</span></td><td><span class="tag-chip-grey">sin tag IaC</span></td><td>No gestionar con Terraform</td></tr>
+            <tr><td><code>VROPSPREP</code></td><td>VMware Aria Operations</td><td><span class="badge badge-infra">INFRAESTRUCTURA</span></td><td><span class="tag-chip-grey">sin tag IaC</span></td><td>No gestionar con Terraform</td></tr>
+            <tr><td><code>SG_vDSM_0_21</code></td><td>Hivecloud DSM</td><td><span class="badge badge-infra">INFRAESTRUCTURA</span></td><td><span class="tag-chip-grey">sin tag IaC</span></td><td>Gestionado por Hillstone</td></tr>
+            <tr><td><code>SG_vSSM_0_17</code></td><td>Hivecloud SSM</td><td><span class="badge badge-infra">INFRAESTRUCTURA</span></td><td><span class="tag-chip-grey">sin tag IaC</span></td><td>Gestionado por Hillstone</td></tr>
+            <tr><td><code>SG_vSSM_0_19</code></td><td>Hivecloud SSM</td><td><span class="badge badge-infra">INFRAESTRUCTURA</span></td><td><span class="tag-chip-grey">sin tag IaC</span></td><td>Gestionado por Hillstone</td></tr>
+            <tr><td><code>SG_vSCM_0_1</code></td><td>Hivecloud SCM</td><td><span class="badge badge-infra">INFRAESTRUCTURA</span></td><td><span class="tag-chip-grey">sin tag IaC</span></td><td>Gestionado por Hillstone</td></tr>
+            <tr><td><code>SG_vSCM_0_2</code></td><td>Hivecloud SCM</td><td><span class="badge badge-infra">INFRAESTRUCTURA</span></td><td><span class="tag-chip-grey">sin tag IaC</span></td><td>Gestionado por Hillstone</td></tr>
+        </tbody>
+    </table>
+
+    <h3 id="s4-5">4.5. Tags pendientes para Fase 2</h3>
+    <table>
+        <thead><tr><th>Tag propuesto</th><th>Categoría</th><th>Cardinalidad</th><th>Estado</th><th>Bloqueante</th></tr></thead>
+        <tbody>
+            <tr>
+                <td><code>SistemaOperativo</code></td><td>SistemaOperativo</td><td>SINGLE</td>
+                <td><span class="badge badge-ok">✅ Implementado en main.tf</span></td>
+                <td>Sin bloqueante — datos en inventario</td>
+            </tr>
+            <tr>
+                <td><code>Aplicacion</code></td><td>Aplicacion</td><td>SINGLE</td>
+                <td><span class="badge badge-pending">❌ Pendiente</span></td>
+                <td>Diccionario oficial pendiente de aprobación por Arquitectura</td>
+            </tr>
+            <tr>
+                <td><code>Owner</code></td><td>Owner</td><td>SINGLE</td>
+                <td><span class="badge badge-pending">❌ Pendiente</span></td>
+                <td>Definición organizacional — requiere workshop con líderes de área</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- SECCIÓN 5 -->
+    <h2 id="s5">5. Gaps y Recomendaciones</h2>
+    <table>
+        <thead><tr><th>Gap</th><th>Riesgo</th><th>Acción recomendada</th></tr></thead>
+        <tbody>
+            <tr><td>Nombres no estandarizados en VMs existentes</td><td>Difícil identificar rol/ambiente en incidentes</td><td>Aplicar naming solo a VMs nuevas</td></tr>
+            <tr><td>Todas las VMs en folder <code>POOL</code></td><td>Sin priorización en incidentes</td><td>Crear folders por criticidad en Fase 1</td></tr>
+            <tr><td>Sin tags en ninguna VM (estado inicial)</td><td>Reportes y filtros imposibles</td><td>✅ Resuelto — tags <code>Ambiente</code> y <code>SistemaOperativo</code> implementados con Terraform</td></tr>
+            <tr><td><code>NGINXATALLAPREP</code> apagada sin documentar</td><td>Riesgo de eliminarla por error</td><td>✅ Resuelto — stand-by intencional documentado en sección 4.4</td></tr>
+            <tr><td>Tags <code>Aplicacion</code> y <code>Owner</code> ausentes</td><td>Sin trazabilidad de dueño ni aplicación</td><td>Resolver en Fase 2 — requiere aprobación organizacional</td></tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- SECCIÓN 6 -->
+    <h2 id="s6">6. Aprobaciones / Decisiones</h2>
+    <table>
+        <thead><tr><th>Campo</th><th>Valor</th></tr></thead>
+        <tbody>
+            <tr><td>Fecha elaboración</td><td>2026-03-13</td></tr>
+            <tr><td>Última actualización</td><td>2026-03-20</td></tr>
+            <tr><td>Elaborado por</td><td>Alex Ballesteros</td></tr>
+            <tr><td>Pendiente aprobación</td><td>Infraestructura, Seguridad Informática</td></tr>
+            <tr><td>Aplica a</td><td>Datacenter Contingencia (fase inicial)</td></tr>
+            <tr><td>Próxima revisión</td><td>Antes de terraform apply en producción</td></tr>
+        </tbody>
+    </table>
+
+</div>
+</body>
+</html>
